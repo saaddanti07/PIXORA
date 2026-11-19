@@ -30,7 +30,7 @@ void main() {
       (WidgetTester tester) async {
     await pumpPixoraApp(tester);
 
-    await tester.tap(find.byTooltip('Settings'));
+    await tester.tap(find.byIcon(Icons.tune_rounded));
     await tester.pumpAndSettle();
 
     expect(_selectedTabIndex(tester), 2);

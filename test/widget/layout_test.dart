@@ -37,7 +37,7 @@ void main() {
       // Home
       await tester.tap(find.byKey(const Key('nav_home')));
       await tester.pumpAndSettle();
-      await _scrollThrough(tester, find.byType(Scrollable).first);
+      await _scrollThrough(tester, find.byType(Scrollable).last);
 
       // History
       await tester.tap(find.byKey(const Key('nav_history')));
@@ -46,7 +46,7 @@ void main() {
       // Settings (scrolls through appearance, language, privacy, about)
       await tester.tap(find.byKey(const Key('nav_settings')));
       await tester.pumpAndSettle();
-      await _scrollThrough(tester, find.byType(Scrollable).at(2));
+      await _scrollThrough(tester, find.byType(Scrollable).last);
 
       expect(tester.takeException(), isNull);
     }

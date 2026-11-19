@@ -68,17 +68,20 @@ class _RootShellState extends State<RootShell> {
         onDestinationSelected: _select,
         destinations: <Widget>[
           NavigationDestination(
-            icon: const Icon(Icons.home_outlined, key: Key('nav_home')),
+            key: const Key('nav_home'),
+            icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home_rounded),
             label: l10n.navHome,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.history_outlined, key: Key('nav_history')),
+            key: const Key('nav_history'),
+            icon: const Icon(Icons.history_outlined),
             selectedIcon: const Icon(Icons.history_rounded),
             label: l10n.navHistory,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.settings_outlined, key: Key('nav_settings')),
+            key: const Key('nav_settings'),
+            icon: const Icon(Icons.settings_outlined),
             selectedIcon: const Icon(Icons.settings_rounded),
             label: l10n.navSettings,
           ),

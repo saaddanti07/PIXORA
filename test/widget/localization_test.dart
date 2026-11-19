@@ -19,7 +19,11 @@ void main() {
         SupportedLanguage.french);
     expect(harness.store.read(PreferencesKeys.language), 'fr');
     expect(find.text('Réglages'), findsWidgets);
+
+    await tester.tap(find.byKey(const Key('nav_home')));
+    await tester.pumpAndSettle();
     expect(find.text('Restaurez vos souvenirs'), findsOneWidget);
+    expect(find.text('Choisir une photo'), findsOneWidget);
   });
 
   testWidgets('switching to Arabic produces a right-to-left interface',
@@ -42,6 +46,9 @@ void main() {
     expect(app.locale, const Locale('ar'));
 
     expect(find.text('الإعدادات'), findsWidgets);
+
+    await tester.tap(find.byKey(const Key('nav_home')));
+    await tester.pumpAndSettle();
     expect(find.text('أعِد ذكرياتك إلى الحياة'), findsOneWidget);
   });
 

@@ -1,5 +1,10 @@
 # PIXORA — Phase 01 implementation report
 
+> **Note (0.1.1):** this report describes Phase 01 as originally delivered (51 tests).
+> The runtime bug fix that followed — lost photo picks, preview freshness, state
+> restoration, locale pinning — is documented in
+> [`BUGFIX_0_1_1_RUNTIME.md`](BUGFIX_0_1_1_RUNTIME.md) and raises the suite to 72 tests.
+
 **Scope delivered:** project foundation, premium UI, branding, navigation, localization (EN/AR/FR
 with RTL), themes, local preferences, real image picking and preview, history foundation, engine
 architecture, CI and documentation.

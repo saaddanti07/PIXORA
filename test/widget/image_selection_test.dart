@@ -17,15 +17,22 @@ import '../helpers/test_harness.dart';
 /// They assert on the *actual image provider* used by the preview, so a cached
 /// or stale bitmap cannot pass as success.
 
-/// Runs the real file I/O and image decoding that the picker performs, then
-/// lets the widget tree catch up (including the route transition).
+/// Lets a pick run to completion.
+///
+/// The picker validates the photo with real, asynchronous file I/O
+/// (`exists` → `length` → signature → header), so the fake test clock cannot
+/// drive it on its own: each real I/O call has to finish in real time before
+/// the next `await` in the chain can even start. Alternating real time with
+/// frames walks the whole chain, then the route transition is fast-forwarded.
 Future<void> _settlePick(WidgetTester tester) async {
-  await tester.pump();
-  await tester.runAsync(() async {
-    await Future<void>.delayed(const Duration(milliseconds: 40));
-  });
-  await tester.pump();
+  for (int round = 0; round < 16; round++) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    });
+    await tester.pump();
+  }
   await tester.pump(const Duration(milliseconds: 400));
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 /// The file the preview is really displaying.

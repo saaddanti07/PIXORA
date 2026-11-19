@@ -11,6 +11,11 @@ device**. There is no upload, no account, and no paywall.
 > theme handling, local storage and the local image picker/preview are **implemented and
 > working**. The AI tools themselves are **not implemented yet** and are clearly labelled as
 > coming soon. No screen presents fake processing results.
+>
+> **0.1.1 (bug fix):** runtime defects reported from real-device testing were investigated and
+> fixed — lost photo picks after an Android activity kill, stale bitmaps in the preview, tab
+> state restoration, and hardened theme/language binding. See
+> [`docs/BUGFIX_0_1_1_RUNTIME.md`](docs/BUGFIX_0_1_1_RUNTIME.md).
 
 ---
 
@@ -402,12 +407,14 @@ rendered deterministically, so every density stays pixel-crisp and perfectly cen
 | `sdkmanager`/Android SDK not found | install command-line tools and export `ANDROID_HOME` |
 | APK build runs out of memory in CI | the workflow already caps Gradle; do not add heavy plugins |
 | Emulator too slow on the dev machine | use a physical Redmi 9 or rely on the CI APK |
+| Theme/language change does not seem to apply | check **Settings → About**: it shows `0.1.1 · build <CI run number>`; `0.1.0` means an older APK is still installed |
 
 ## Roadmap
 
 | Phase | Scope |
 | --- | --- |
 | 01 ✅ | Foundation, branding, UI, navigation, localization/RTL, themes, preferences, picker/preview, history shell, engine architecture, CI, tests, docs |
+| 01.1 ✅ | Runtime bug fix for real-device reports: picker lost-data recovery, preview freshness, state restoration, locale pinning, build stamp |
 | 02 | First real processing (classical enhancement), history capture and re-open |
 | 03 | LiteRT integration, model storage/download manager, Smart AI Engine profiling |
 | 04 | Restoration, face restoration, colourisation, artistic styles, pixel art |

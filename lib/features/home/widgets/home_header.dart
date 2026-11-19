@@ -42,7 +42,7 @@ class HomeHeader extends StatelessWidget {
 }
 
 class _SettingsButton extends StatelessWidget {
-  const _SettingsButton({required this.onPressed, required this.tooltip, super.key});
+  const _SettingsButton({required this.onPressed, required this.tooltip});
 
   final VoidCallback onPressed;
   final String tooltip;

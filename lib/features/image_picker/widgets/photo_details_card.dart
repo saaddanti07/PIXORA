@@ -85,7 +85,6 @@ class _DetailRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.isLast = false,
-    super.key,
   });
 
   final String label;
@@ -94,7 +93,6 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final PixoraPalette palette = PixoraPalette.of(context);
     final TextTheme textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.sm),

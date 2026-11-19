@@ -121,7 +121,7 @@ class RestorationHeroCard extends StatelessWidget {
 }
 
 class _Glow extends StatelessWidget {
-  const _Glow({required this.size, required this.opacity, super.key});
+  const _Glow({required this.size, required this.opacity});
 
   final double size;
   final double opacity;

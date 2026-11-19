@@ -14,8 +14,7 @@ void main() {
     await tester.tap(find.byKey(const Key('nav_settings')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Dark'));
-    await tester.pumpAndSettle();
+    await tapOption(tester, 'Dark');
 
     expect(harness.bootstrap.settingsController.themeMode, ThemeMode.dark);
     expect(harness.store.read(PreferencesKeys.themeMode), 'dark');
@@ -36,8 +35,7 @@ void main() {
     await tester.tap(find.byKey(const Key('nav_settings')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Light'));
-    await tester.pumpAndSettle();
+    await tapOption(tester, 'Light');
 
     final BuildContext context = tester.element(find.text('Appearance'));
     expect(Theme.of(context).brightness, Brightness.light);

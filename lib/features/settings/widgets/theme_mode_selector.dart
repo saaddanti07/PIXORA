@@ -73,7 +73,6 @@ class _ThemeOptionTile extends StatelessWidget {
     required this.option,
     required this.selected,
     required this.onTap,
-    super.key,
   });
 
   final _ThemeOption option;

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pixora/app/app.dart';
 import 'package:pixora/app/bootstrap.dart';
@@ -63,12 +64,34 @@ TestHarness createTestHarness({
   return TestHarness(bootstrap: bootstrap, store: store);
 }
 
+/// A viewport tall enough to hold a whole screen, so widget tests assert on
+/// content instead of on scroll offsets. Layout tests opt out and set a real
+/// phone size instead.
+void useTallViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1000, 2200);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+}
+
+/// Scrolls a settings option into view before tapping it.
+Future<void> tapOption(WidgetTester tester, String label) async {
+  final Finder finder = find.text(label);
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 /// Pumps PIXORA with fake services and returns the harness.
 Future<TestHarness> pumpPixoraApp(
   WidgetTester tester, {
   Map<String, String> storedValues = const <String, String>{},
   ImagePickerService? picker,
+  bool useTallScreen = true,
 }) async {
+  if (useTallScreen) {
+    useTallViewport(tester);
+  }
   final TestHarness harness =
       createTestHarness(storedValues: storedValues, picker: picker);
   await tester.pumpWidget(PixoraApp(bootstrap: harness.bootstrap));

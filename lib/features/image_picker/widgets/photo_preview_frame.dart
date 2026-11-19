@@ -61,7 +61,7 @@ class PhotoPreviewFrame extends StatelessWidget {
 }
 
 class _PreviewError extends StatelessWidget {
-  const _PreviewError({required this.message, super.key});
+  const _PreviewError({required this.message});
 
   final String message;
 

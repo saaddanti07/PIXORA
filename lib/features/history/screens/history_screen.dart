@@ -25,7 +25,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  late List<HistoryEntry> _entries = widget.repository.load();
+  late final List<HistoryEntry> _entries = widget.repository.load();
 
   @override
   Widget build(BuildContext context) {

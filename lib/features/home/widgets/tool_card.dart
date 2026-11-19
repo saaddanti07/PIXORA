@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pixora/app/theme/app_spacing.dart';
-import 'package:pixora/app/theme/pixora_palette.dart';
 import 'package:pixora/core/widgets/coming_soon_badge.dart';
 import 'package:pixora/core/widgets/pixora_card.dart';
 import 'package:pixora/features/home/data/creative_tools.dart';

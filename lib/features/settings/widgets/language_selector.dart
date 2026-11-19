@@ -45,7 +45,6 @@ class _LanguageTile extends StatelessWidget {
     required this.language,
     required this.selected,
     required this.onTap,
-    super.key,
   });
 
   final SupportedLanguage language;

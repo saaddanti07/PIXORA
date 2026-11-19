@@ -13,8 +13,7 @@ void main() {
     await tester.tap(find.byKey(const Key('nav_settings')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Français'));
-    await tester.pumpAndSettle();
+    await tapOption(tester, 'Français');
 
     expect(harness.bootstrap.settingsController.language,
         SupportedLanguage.french);
@@ -30,8 +29,7 @@ void main() {
     await tester.tap(find.byKey(const Key('nav_settings')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('العربية'));
-    await tester.pumpAndSettle();
+    await tapOption(tester, 'العربية');
 
     expect(harness.bootstrap.settingsController.language,
         SupportedLanguage.arabic);
@@ -54,15 +52,13 @@ void main() {
     await tester.tap(find.byKey(const Key('nav_settings')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('العربية'));
-    await tester.pumpAndSettle();
+    await tapOption(tester, 'العربية');
     expect(
       Directionality.of(tester.element(find.byType(NavigationBar))),
       TextDirection.rtl,
     );
 
-    await tester.tap(find.text('English'));
-    await tester.pumpAndSettle();
+    await tapOption(tester, 'English');
     expect(
       Directionality.of(tester.element(find.byType(NavigationBar))),
       TextDirection.ltr,

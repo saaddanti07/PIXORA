@@ -77,7 +77,7 @@ jobs:
           {
             echo "### flutter analyze — exit ${ANALYZE_EXIT}"
             echo '```'
-            tail -c 30000 analysis.log
+            tail -c 18000 analysis.log
             echo '```'
             echo
             echo "### flutter test — exit ${TEST_EXIT}"

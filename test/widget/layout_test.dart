@@ -28,7 +28,7 @@ void main() {
       (WidgetTester tester) async {
     _useRedmi9Viewport(tester);
 
-    final TestHarness harness = await pumpPixoraApp(tester);
+    final TestHarness harness = await pumpPixoraApp(tester, useTallScreen: false);
 
     for (final SupportedLanguage language in SupportedLanguage.values) {
       await harness.bootstrap.settingsController.setLanguage(language);

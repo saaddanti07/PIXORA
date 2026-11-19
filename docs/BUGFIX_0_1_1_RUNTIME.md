@@ -148,13 +148,35 @@ AdMob/network/AI code.
 
 ## 4. Verification (CI, this branch)
 
-Filled in from the workflow run on this commit — see the run linked in the pull
-request. Local `flutter analyze` / `flutter test` / `flutter build apk` are
-impossible in the development sandbox, so the workflow output is the only
-evidence that exists.
+Local `flutter analyze` / `flutter test` / `flutter build apk` are impossible in
+the development sandbox (no Flutter, Dart, JDK, Gradle or Android SDK, and
+`pub.dev` / `storage.googleapis.com` / `services.gradle.org` are unreachable), so
+the workflow is the only evidence — and the only place these commands were run.
 
-Static pre-checks (screen-level audit of Android resources, manifests,
-localization parity, imports, workflow shape): **58 / 58 pass**.
+Workflow run **44532573782** on commit `cc07b95` (`push`, branch
+`arena/f490bcd4-pixora`): **both jobs green.**
+
+| Step | Result |
+| --- | --- |
+| `flutter pub get` | ✅ |
+| `flutter gen-l10n` | ✅ |
+| `flutter analyze` | ✅ **`No issues found!`** (exit 0) |
+| `flutter test` | ✅ **72 / 72 passing**, 0 failures, 14 files |
+| `flutter build apk --debug` | ✅ `app-debug.apk` |
+| Artifact | ✅ `pixora-debug-apk`, **76,950,351 bytes**, not expired |
+
+Test suite growth: 51 → **72** (30 → 34 unit, 21 → 38 widget). No existing test
+was weakened or removed; the new ones are listed in §3.
+
+> Honest note on the way there: the first CI attempt on this branch
+> (`547407f`) was **red** — `flutter analyze` was clean but 5 of the new image
+> tests failed, because the picker's real file-system `await`s cannot be driven
+> by the fake test clock. The tests were fixed to alternate real time with
+> frames (commit `cc07b95`), not loosened: they still assert on the exact file
+> the preview is displaying.
+
+Static pre-checks (Android resources and manifests, localization parity,
+imports, workflow shape, forbidden dependencies): **58 / 58 pass**.
 
 ---
 

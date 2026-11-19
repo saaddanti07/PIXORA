@@ -1,0 +1,122 @@
+{
+  "@@locale": "ar",
+  "appName": "PIXORA",
+  "@appName": {
+    "description": "Official application name. Never translated or combined with the word AI."
+  },
+  "appTagline": "استعِد · حسِّن · أبدِع",
+  "navHome": "الرئيسية",
+  "navHistory": "السجل",
+  "navSettings": "الإعدادات",
+  "homeWelcomeTitle": "مرحبًا بك في PIXORA",
+  "homeWelcomeSubtitle": "أعِد الصور القديمة إلى الحياة — بجمال، وبخصوصية تامة، على جهازك.",
+  "homeHeroTitle": "أعِد ذكرياتك إلى الحياة",
+  "homeHeroDescription": "أحيِ الصور القديمة والتالفة من جديد.",
+  "homeChoosePhoto": "اختر صورة",
+  "homeOpeningGallery": "جارٍ فتح المعرض…",
+  "homeHeroBadge": "على جهازك بالكامل",
+  "homeCreativeToolsTitle": "أدوات إبداعية",
+  "homeCreativeToolsSubtitle": "تحسينات قوية، مصمّمة لجهازك.",
+  "homeRecentTitle": "النشاط الأخير",
+  "homeRecentAction": "عرض الكل",
+  "homeRecentEmptyTitle": "لا شيء هنا بعد",
+  "homeRecentEmptyDescription": "ستظهر الصور المعالجة هنا بمجرد أن تبدأ الإبداع مع PIXORA.",
+  "homeSettingsTooltip": "الإعدادات",
+  "toolEnhanceTitle": "تحسين الصور بالذكاء الاصطناعي",
+  "toolEnhanceDescription": "زيادة حدّة التفاصيل والوضوح.",
+  "toolRestorationTitle": "ترميم الصور القديمة",
+  "toolRestorationDescription": "إصلاح الخدوش والبهتان والتلف.",
+  "toolFaceTitle": "تحسين الوجوه",
+  "toolFaceDescription": "استعادة تفاصيل الوجه الطبيعية.",
+  "toolColorizeTitle": "تلوين الصور بالأبيض والأسود",
+  "toolColorizeDescription": "أضف ألوانًا واقعية للصور القديمة.",
+  "toolBackgroundTitle": "تحسين الخلفية",
+  "toolBackgroundDescription": "تنظيف الخلفية وإثراء تفاصيلها.",
+  "toolAnimeTitle": "نمط الأنمي",
+  "toolAnimeDescription": "حوّل البورتريهات إلى فن أنمي.",
+  "toolArtisticTitle": "تأثيرات فنية",
+  "toolArtisticDescription": "أنماط شبيهة بالرسم وفلاتر إبداعية.",
+  "toolPixelTitle": "فن البكسل",
+  "toolPixelDescription": "حوّل الصور إلى فن بكسل واضح.",
+  "toolComingSoon": "قريبًا",
+  "toolComingSoonTitle": "قيد التطوير",
+  "toolComingSoonBody": "يجري تجهيز {tool} ضمن تحديث قادم من PIXORA. سيعمل على جهازك، وسيبقى مجانيًا.",
+  "@toolComingSoonBody": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "toolComingSoonClose": "تم",
+  "previewTitle": "معاينة",
+  "previewClose": "إغلاق",
+  "previewZoomHint": "قرّب بإصبعيك للتكبير",
+  "previewChooseAnother": "اختر صورة أخرى",
+  "previewBackHome": "العودة إلى الرئيسية",
+  "previewDetailsTitle": "تفاصيل الصورة",
+  "previewFileName": "اسم الملف",
+  "previewDimensions": "الأبعاد",
+  "previewFileSize": "حجم الملف",
+  "previewFormat": "الصيغة",
+  "previewUnknown": "غير معروف",
+  "previewDimensionValue": "{width} × {height}",
+  "@previewDimensionValue": {
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "previewFormatJpeg": "JPEG",
+  "previewFormatPng": "PNG",
+  "previewFormatWebp": "WebP",
+  "previewFormatGif": "GIF",
+  "previewFormatUnknown": "غير معروف",
+  "previewStoredLocally": "محفوظة على هذا الجهاز فقط",
+  "previewFutureNotice": "الترميم والتحسين التلقائي قادمان في تحديث قادم. صورتك تبقى على جهازك.",
+  "pickErrorPermission": "يحتاج PIXORA إلى الوصول إلى صورك للمتابعة. يرجى السماح بالوصول إلى الصور من إعدادات الجهاز.",
+  "pickErrorUnavailable": "لا يوجد منتقي صور متاح على هذا الجهاز. يرجى المحاولة مرة أخرى.",
+  "pickErrorUnsupported": "هذا الملف ليس صورة مدعومة. يرجى اختيار صورة بصيغة JPG أو PNG أو WebP.",
+  "pickErrorTooLarge": "هذه الصورة كبيرة جدًا لفتحها بأمان. يرجى تجربة صورة أصغر.",
+  "pickErrorUnreadable": "تعذّرت قراءة الصورة المحددة. يرجى تجربة صورة أخرى.",
+  "pickErrorUnknown": "حدث خطأ أثناء فتح صورتك. يرجى المحاولة مرة أخرى.",
+  "historyTitle": "السجل",
+  "historySubtitle": "كل صورة تعالجها ستُحفظ هنا.",
+  "historyEmptyTitle": "لا توجد صور معالجة بعد",
+  "historyEmptyDescription": "عندما ترمّم صورة أو تحسّنها، ستظهر هنا لتتمكن من العودة إليها في أي وقت.",
+  "historyEmptyAction": "ابدأ الإبداع",
+  "historyPrivacyNote": "يبقى السجل على جهازك. لا يتم رفع أي شيء.",
+  "settingsTitle": "الإعدادات",
+  "settingsSubtitle": "اجعل PIXORA يناسبك.",
+  "settingsAppearanceTitle": "المظهر",
+  "settingsAppearanceSubtitle": "اختر شكل PIXORA.",
+  "settingsThemeSystem": "النظام",
+  "settingsThemeLight": "فاتح",
+  "settingsThemeDark": "داكن",
+  "settingsLanguageTitle": "اللغة",
+  "settingsLanguageSubtitle": "تُطبَّق التغييرات فورًا دون إعادة تشغيل.",
+  "settingsPrivacyTitle": "خصوصيتك",
+  "settingsPrivacyBody": "تُعالَج الصور على جهازك. لا يرفع PIXORA صورك أبدًا.",
+  "settingsAboutTitle": "حول التطبيق",
+  "settingsAboutSubtitle": "مجاني للجميع، إلى الأبد.",
+  "settingsVersion": "الإصدار {version}",
+  "@settingsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsFreeBadge": "مجاني",
+  "settingsAdSupported": "يبقى PIXORA مجانيًا للجميع. الإعلانات تحافظ على ذلك — ولا تقاطع تعديل صورك أبدًا.",
+  "settingsApplicationId": "معرّف التطبيق",
+  "settingsLicenses": "تراخيص المصادر المفتوحة",
+  "settingsLicensesNote": "PIXORA مبني باستخدام Flutter وحزم مفتوحة المصدر. الشكر لمؤلفيها.",
+  "languageEnglish": "الإنجليزية",
+  "languageArabic": "العربية",
+  "languageFrench": "الفرنسية"
+}

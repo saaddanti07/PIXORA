@@ -70,7 +70,7 @@ jobs:
           echo "TEST_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
 
       - name: Publish failure details on the commit
-        if: always()
+        if: env.ANALYZE_EXIT != '0' || env.TEST_EXIT != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

@@ -83,10 +83,10 @@ supported one, not a guess.
 | `flutter pub get` | ✅ success |
 | `flutter gen-l10n` | ✅ success (92 messages × 3 locales) |
 | `flutter analyze` | ✅ **No issues found** |
-| `flutter test` | ✅ **49 / 49 passing** |
+| `flutter test` | ✅ **51 / 51 passing** |
 | `flutter build apk --debug` | ✅ success, APK uploaded as `pixora-debug-apk` |
 
-Tests: 30 unit + 19 widget, covering startup, navigation, language switching and persistence,
+Tests: 51 cases (30 pure unit + 21 widget), covering startup, navigation, language switching and persistence,
 Arabic RTL, theme switching/persistence, corrupt-storage resilience, image validation and header
 parsing, preview interactions, history ledger, engine contract, and a 360 × 780 dp layout sweep in
 all three languages.
@@ -116,14 +116,12 @@ tool/generate_brand_assets.py, assets/branding/
    SDK; the first local `flutter pub get` should be committed for fully reproducible builds.
 3. `flutter analyze` reports no issues; `dart format` was not enforced in CI because no Dart SDK was
    available locally to normalise formatting. Run `dart format lib test` before the next release.
-4. `actions/upload-artifact` prints a Node 20 deprecation notice on the runner. It does not affect
-   the build output.
-5. The `package:flutter/material.dart` library is annotated deprecated in Flutter 3.50 in favour of
+4. The `package:flutter/material.dart` library is annotated deprecated in Flutter 3.50 in favour of
    the new `material_ui` package; PIXORA stays on the SDK library and the library-level notice is
    silenced in `analysis_options.yaml` with an explanatory comment. Revisit when `material_ui`
    stabilises.
-6. History is intentionally empty: it fills only when real processing exists (Phase 02).
-7. `.gitignore` keeps generated l10n sources out of Git; `flutter gen-l10n` (or any build) recreates
+5. History is intentionally empty: it fills only when real processing exists (Phase 02).
+6. `.gitignore` keeps generated l10n sources out of Git; `flutter gen-l10n` (or any build) recreates
    them.
 
 ## 6. Manual steps for the developer

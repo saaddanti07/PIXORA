@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:pixora/app/localization/l10n.dart';
 import 'package:pixora/app/theme/app_colors.dart';
@@ -47,6 +49,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         return;
       }
       if (next != null) {
+        await _releasePreviousImage(_image, next);
+        if (!mounted) {
+          return;
+        }
         setState(() => _image = next);
       }
     } on ImageSelectionException catch (error) {
@@ -61,6 +67,23 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       if (mounted) {
         setState(() => _isPicking = false);
       }
+    }
+  }
+
+  /// Frees the previous photo from Flutter's image cache.
+  ///
+  /// Two reasons: a 2-3 GB phone must not hold two full-size bitmaps just
+  /// because the user swapped photos, and a cache entry that is still alive is
+  /// exactly what makes a preview show a stale picture instead of the new one.
+  Future<void> _releasePreviousImage(PickedImage previous, PickedImage next) async {
+    if (previous.path == next.path) {
+      return;
+    }
+    try {
+      await FileImage(File(previous.path)).evict();
+    } on Object {
+      // Evicting is best effort: the new photo must still be shown even if the
+      // old entry cannot be removed.
     }
   }
 
@@ -89,7 +112,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             AppSpacing.xl,
           ),
           children: <Widget>[
-            PhotoPreviewFrame(image: _image),
+            // Keyed by path: a new selection must build a brand new image
+            // widget, so the previous photo, its decoding state and its zoom
+            // can never leak into the new one.
+            PhotoPreviewFrame(
+              key: ValueKey<String>(_image.path),
+              image: _image,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Center(
               child: Text(

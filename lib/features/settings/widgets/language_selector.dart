@@ -29,6 +29,9 @@ class LanguageSelector extends StatelessWidget {
               Divider(height: 1, indent: AppSpacing.md, endIndent: AppSpacing.md,
                   color: palette.cardBorder),
             _LanguageTile(
+              key: ValueKey<String>(
+                'language_option_${SupportedLanguage.values[index].code}',
+              ),
               language: SupportedLanguage.values[index],
               selected: SupportedLanguage.values[index] == value,
               onTap: () => onChanged(SupportedLanguage.values[index]),
@@ -45,6 +48,7 @@ class _LanguageTile extends StatelessWidget {
     required this.language,
     required this.selected,
     required this.onTap,
+    super.key,
   });
 
   final SupportedLanguage language;

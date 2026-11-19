@@ -14,7 +14,9 @@ import 'package:pixora/features/settings/widgets/theme_mode_selector.dart';
 
 /// Settings: appearance, language, privacy and application information.
 ///
-/// Every change is applied immediately and saved locally.
+/// Every change is applied immediately and saved locally. The selection is read
+/// from the same [SettingsController] the application root listens to, so the
+/// whole app — not just this screen — switches theme and language at once.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -65,8 +67,11 @@ class SettingsScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Icon(Icons.shield_moon_outlined,
-                      size: 20, color: palette.accent),
+                  Icon(
+                    Icons.shield_moon_outlined,
+                    size: 20,
+                    color: palette.accent,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -74,17 +79,17 @@ class SettingsScreen extends StatelessWidget {
                       style: textTheme.bodySmall,
                     ),
                   ),
-        ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            SettingsSection(
-              title: l10n.settingsAboutTitle,
-              subtitle: l10n.settingsAboutSubtitle,
-              child: const AboutCard(),
-            ),
-          ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SettingsSection(
+            title: l10n.settingsAboutTitle,
+            subtitle: l10n.settingsAboutSubtitle,
+            child: const AboutCard(),
+          ),
+        ],
       ),
     );
   }

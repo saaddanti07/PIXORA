@@ -37,6 +37,21 @@ void main() {
     expect(find.text('Your privacy'), findsOneWidget);
   });
 
+  testWidgets('the open tab survives a process restart', (WidgetTester tester) async {
+    await pumpPixoraApp(tester);
+
+    await tester.tap(find.byKey(const Key('nav_settings')));
+    await tester.pumpAndSettle();
+    expect(_selectedTabIndex(tester), 2);
+
+    // Android killing the app in the background and restoring it later.
+    await tester.restartAndRestore();
+    await tester.pumpAndSettle();
+
+    expect(_selectedTabIndex(tester), 2);
+    expect(find.text('Appearance'), findsOneWidget);
+  });
+
   testWidgets('history empty state sends the user back to Home',
       (WidgetTester tester) async {
     await pumpPixoraApp(tester);

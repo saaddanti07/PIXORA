@@ -42,7 +42,10 @@ class PhotoPreviewFrame extends StatelessWidget {
                     cacheWidth: cacheWidth,
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.medium,
-                    gaplessPlayback: true,
+                    // Never keep showing the previous bitmap: if the newly
+                    // selected file cannot be decoded the user must see the
+                    // error, not the photo they just replaced.
+                    gaplessPlayback: false,
                     errorBuilder: (
                       BuildContext context,
                       Object error,

@@ -137,6 +137,73 @@ void main() {
     );
   });
 
+  test('a photo kept after an activity kill is recovered and validated', () async {
+    final File file = writeTempFile(
+      directory,
+      'recovered.jpg',
+      jpegHeader(width: 1024, height: 768),
+    );
+    final ImageSelectionController controller = controllerFor(
+      FakeImagePickerService(lostPath: file.path),
+    );
+
+    final PickedImage? image = await controller.recoverLostImage();
+
+    expect(image, isNotNull);
+    expect(image!.fileName, 'recovered.jpg');
+    expect(image.format, ImageFormat.jpeg);
+    expect(image.dimensions!.width, 1024);
+    expect(image.dimensions!.height, 768);
+  });
+
+  test('recovery returns null when the OS kept nothing', () async {
+    final ImageSelectionController controller =
+        controllerFor(FakeImagePickerService());
+
+    expect(await controller.recoverLostImage(), isNull);
+  });
+
+  test('a recovered photo that no longer exists is rejected, not shown',
+      () async {
+    final ImageSelectionController controller = controllerFor(
+      FakeImagePickerService(lostPath: '${directory.path}/gone.jpg'),
+    );
+
+    await expectLater(
+      controller.recoverLostImage(),
+      throwsA(
+        isA<ImageSelectionException>().having(
+          (ImageSelectionException error) => error.kind,
+          'kind',
+          ImageSelectionErrorKind.fileUnreadable,
+        ),
+      ),
+    );
+  });
+
+  test('a recovered photo is validated with the same rules as a pick',
+      () async {
+    final File file = writeTempFile(
+      directory,
+      'not-an-image.png',
+      'definitely not an image'.codeUnits,
+    );
+    final ImageSelectionController controller = controllerFor(
+      FakeImagePickerService(lostPath: file.path),
+    );
+
+    await expectLater(
+      controller.recoverLostImage(),
+      throwsA(
+        isA<ImageSelectionException>().having(
+          (ImageSelectionException error) => error.kind,
+          'kind',
+          ImageSelectionErrorKind.unsupportedFormat,
+        ),
+      ),
+    );
+  });
+
   test('picker failures are mapped to UI actionable kinds', () async {
     Future<ImageSelectionErrorKind> kindFor(ImagePickerFailure failure) async {
       final ImageSelectionController controller = controllerFor(

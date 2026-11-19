@@ -5,7 +5,18 @@ abstract final class AppConstants {
   static const String appName = 'PIXORA';
 
   /// Marketing version of this development phase.
-  static const String appVersion = '0.1.0';
+  static const String appVersion = '0.1.1';
+
+  /// Build stamp of the APK that is actually running.
+  ///
+  /// The CI build passes `--dart-define=PIXORA_BUILD=<run number>`, and the
+  /// value is shown in Settings → About. It exists so a tester can prove which
+  /// build is installed on the phone instead of guessing whether an update
+  /// really landed.
+  static const String buildStamp = String.fromEnvironment(
+    'PIXORA_BUILD',
+    defaultValue: 'local',
+  );
 
   /// Android application id.
   static const String applicationId = 'com.pixora.app';

@@ -10,7 +10,13 @@ import 'package:pixora/features/settings/data/settings_repository.dart';
 
 /// A picker double that never touches a platform channel.
 class FakeImagePickerService implements ImagePickerService {
-  FakeImagePickerService({this.path, this.failure, this.onPick});
+  FakeImagePickerService({
+    this.path,
+    this.failure,
+    this.onPick,
+    this.lostPath,
+    this.lostFailure,
+  });
 
   /// Path returned when the user "picks" a photo.
   final String? path;
@@ -22,7 +28,15 @@ class FakeImagePickerService implements ImagePickerService {
   /// the second call).
   final String? Function()? onPick;
 
+  /// Photo Android kept after destroying the activity while the picker was in
+  /// the foreground, i.e. what `retrieveLostData` would return on a device.
+  final String? lostPath;
+
+  /// Failure reported instead of a recovered photo.
+  final ImagePickerFailure? lostFailure;
+
   int callCount = 0;
+  int lostCallCount = 0;
 
   @override
   Future<String?> pickImagePath() async {
@@ -34,6 +48,15 @@ class FakeImagePickerService implements ImagePickerService {
       return onPick!();
     }
     return path;
+  }
+
+  @override
+  Future<String?> retrieveLostImagePath() async {
+    lostCallCount++;
+    if (lostFailure != null) {
+      throw ImagePickerException(lostFailure!);
+    }
+    return lostPath;
   }
 }
 

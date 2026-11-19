@@ -33,4 +33,15 @@ abstract interface class ImagePickerService {
   /// Returns the local path of the chosen image, or `null` when the user
   /// cancels. Throws [ImagePickerException] on failure.
   Future<String?> pickImagePath();
+
+  /// Returns the photo the operating system kept for us, or `null` when there
+  /// is nothing to recover.
+  ///
+  /// Android is allowed to destroy the app's activity while the system picker
+  /// is in the foreground — a routine event on a 2-3 GB phone such as the Redmi
+  /// 9. When that happens the picker's original result is delivered to nobody,
+  /// and the plugin stores the chosen file so the next app instance can pick it
+  /// up. Without this call the photo is silently lost and the user sees nothing
+  /// after returning from the gallery.
+  Future<String?> retrieveLostImagePath();
 }

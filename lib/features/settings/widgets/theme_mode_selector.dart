@@ -44,6 +44,7 @@ class ThemeModeSelector extends StatelessWidget {
           if (index > 0) const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _ThemeOptionTile(
+              key: ValueKey<String>('theme_option_${options[index].mode.name}'),
               option: options[index],
               selected: options[index].mode == value,
               onTap: () => onChanged(options[index].mode),
@@ -73,6 +74,7 @@ class _ThemeOptionTile extends StatelessWidget {
     required this.option,
     required this.selected,
     required this.onTap,
+    super.key,
   });
 
   final _ThemeOption option;

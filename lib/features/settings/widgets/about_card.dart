@@ -44,7 +44,9 @@ class AboutCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            l10n.settingsVersion(AppConstants.appVersion),
+            l10n.settingsVersion(
+              '${AppConstants.appVersion} · build ${AppConstants.buildStamp}',
+            ),
             style: textTheme.labelSmall,
           ),
           const SizedBox(height: AppSpacing.md),

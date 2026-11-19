@@ -129,8 +129,9 @@ jobs:
         run: |
           set +e
           flutter build apk --debug \
-            --build-name "0.1.0" \
-            --build-number "${{ github.run_number }}" 2>&1 | tee build.log
+            --build-name "0.1.1" \
+            --build-number "${{ github.run_number }}" \
+            --dart-define "PIXORA_BUILD=${{ github.run_number }}" 2>&1 | tee build.log
           echo "BUILD_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
 
       - name: Publish build failure details on the commit

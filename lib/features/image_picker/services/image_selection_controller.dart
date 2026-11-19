@@ -65,7 +65,33 @@ class ImageSelectionController {
     if (path == null) {
       return null;
     }
+    return _validate(path);
+  }
 
+  /// Recovers the photo Android kept for us when it destroyed the app's
+  /// activity while the system picker was open.
+  ///
+  /// Returns `null` when there is nothing to recover. This must be called when
+  /// the app starts and whenever it returns to the foreground: without it the
+  /// chosen photo is never delivered and the user sees an empty home screen
+  /// after picking, which is what happens on memory-constrained devices.
+  Future<PickedImage?> recoverLostImage() async {
+    final String? path;
+    try {
+      path = await _picker.retrieveLostImagePath();
+    } on ImagePickerException catch (error) {
+      throw ImageSelectionException(_errorFor(error.failure), error);
+    }
+
+    if (path == null || path.isEmpty) {
+      return null;
+    }
+    return _validate(path);
+  }
+
+  /// Reads and checks a photo the platform returned, so every entry point
+  /// (pick, re-pick, recovered pick) applies exactly the same rules.
+  Future<PickedImage> _validate(String path) async {
     try {
       final File file = File(path);
       if (!await file.exists()) {

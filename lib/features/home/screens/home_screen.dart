@@ -93,53 +93,51 @@ class _HomeScreenState extends State<HomeScreen> {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final List<CreativeTool> tools = buildCreativeTools(l10n);
 
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screen,
-            AppSpacing.md,
-            AppSpacing.screen,
-            AppSpacing.xxl,
-          ),
-          children: <Widget>[
-            HomeHeader(onOpenSettings: widget.onOpenSettings),
-            const SizedBox(height: AppSpacing.xl),
-            Text(l10n.homeWelcomeTitle, style: textTheme.headlineMedium),
-            const SizedBox(height: 6),
-            Text(l10n.homeWelcomeSubtitle, style: textTheme.bodyMedium),
-            const SizedBox(height: AppSpacing.lg),
-            RestorationHeroCard(
-              onChoosePhoto: _choosePhoto,
-              isPicking: _isPicking,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SectionHeader(
-              title: l10n.homeCreativeToolsTitle,
-              subtitle: l10n.homeCreativeToolsSubtitle,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ToolGrid(
-              tools: tools,
-              onToolSelected: (CreativeTool tool) =>
-                  ComingSoonSheet.show(context, tool),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            SectionHeader(
-              title: l10n.homeRecentTitle,
-              trailing: TextButton(
-                onPressed: widget.onOpenHistory,
-                child: Text(l10n.homeRecentAction),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            RecentActivityCard(
-              entries: _entries,
-              onViewAll: widget.onOpenHistory,
-            ),
-          ],
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          AppSpacing.md,
+          AppSpacing.screen,
+          AppSpacing.xxl,
         ),
+        children: <Widget>[
+          HomeHeader(onOpenSettings: widget.onOpenSettings),
+          const SizedBox(height: AppSpacing.xl),
+          Text(l10n.homeWelcomeTitle, style: textTheme.headlineMedium),
+          const SizedBox(height: 6),
+          Text(l10n.homeWelcomeSubtitle, style: textTheme.bodyMedium),
+          const SizedBox(height: AppSpacing.lg),
+          RestorationHeroCard(
+            onChoosePhoto: _choosePhoto,
+            isPicking: _isPicking,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SectionHeader(
+            title: l10n.homeCreativeToolsTitle,
+            subtitle: l10n.homeCreativeToolsSubtitle,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ToolGrid(
+            tools: tools,
+            onToolSelected: (CreativeTool tool) =>
+                ComingSoonSheet.show(context, tool),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SectionHeader(
+            title: l10n.homeRecentTitle,
+            trailing: TextButton(
+              onPressed: widget.onOpenHistory,
+              child: Text(l10n.homeRecentAction),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          RecentActivityCard(
+            entries: _entries,
+            onViewAll: widget.onOpenHistory,
+          ),
+        ],
       ),
     );
   }

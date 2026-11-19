@@ -26,56 +26,55 @@ class SettingsScreen extends StatelessWidget {
     final PixoraPalette palette = PixoraPalette.of(context);
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screen,
-            AppSpacing.md,
-            AppSpacing.screen,
-            AppSpacing.xxl,
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          AppSpacing.md,
+          AppSpacing.screen,
+          AppSpacing.xxl,
+        ),
+        children: <Widget>[
+          ScreenHeader(
+            title: l10n.settingsTitle,
+            subtitle: l10n.settingsSubtitle,
           ),
-          children: <Widget>[
-            ScreenHeader(
-              title: l10n.settingsTitle,
-              subtitle: l10n.settingsSubtitle,
+          const SizedBox(height: AppSpacing.xl),
+          SettingsSection(
+            title: l10n.settingsAppearanceTitle,
+            subtitle: l10n.settingsAppearanceSubtitle,
+            child: ThemeModeSelector(
+              value: settings.themeMode,
+              onChanged: controller.setThemeMode,
             ),
-            const SizedBox(height: AppSpacing.xl),
-            SettingsSection(
-              title: l10n.settingsAppearanceTitle,
-              subtitle: l10n.settingsAppearanceSubtitle,
-              child: ThemeModeSelector(
-                value: settings.themeMode,
-                onChanged: controller.setThemeMode,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SettingsSection(
+            title: l10n.settingsLanguageTitle,
+            subtitle: l10n.settingsLanguageSubtitle,
+            child: LanguageSelector(
+              value: settings.language,
+              onChanged: controller.setLanguage,
             ),
-            const SizedBox(height: AppSpacing.xl),
-            SettingsSection(
-              title: l10n.settingsLanguageTitle,
-              subtitle: l10n.settingsLanguageSubtitle,
-              child: LanguageSelector(
-                value: settings.language,
-                onChanged: controller.setLanguage,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SettingsSection(
-              title: l10n.settingsPrivacyTitle,
-              child: PixoraCard(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Icon(Icons.shield_moon_outlined,
-                        size: 20, color: palette.accent),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        l10n.settingsPrivacyBody,
-                        style: textTheme.bodySmall,
-                      ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SettingsSection(
+            title: l10n.settingsPrivacyTitle,
+            child: PixoraCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(Icons.shield_moon_outlined,
+                      size: 20, color: palette.accent),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l10n.settingsPrivacyBody,
+                      style: textTheme.bodySmall,
                     ),
-                  ],
+                  ),
+        ],
                 ),
               ),
             ),
@@ -86,7 +85,6 @@ class SettingsScreen extends StatelessWidget {
               child: const AboutCard(),
             ),
           ],
-        ),
       ),
     );
   }

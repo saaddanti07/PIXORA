@@ -30,28 +30,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = context.l10n;
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screen,
-            AppSpacing.md,
-            AppSpacing.screen,
-            AppSpacing.xxl,
-          ),
-          children: <Widget>[
-            ScreenHeader(
-              title: l10n.historyTitle,
-              subtitle: l10n.historySubtitle,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            if (_entries.isEmpty)
-              HistoryEmptyState(onAction: widget.onStartRestoration)
-            else
-              HistoryList(entries: _entries),
-          ],
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          AppSpacing.md,
+          AppSpacing.screen,
+          AppSpacing.xxl,
         ),
+        children: <Widget>[
+          ScreenHeader(
+            title: l10n.historyTitle,
+            subtitle: l10n.historySubtitle,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          if (_entries.isEmpty)
+            HistoryEmptyState(onAction: widget.onStartRestoration)
+          else
+            HistoryList(entries: _entries),
+        ],
       ),
     );
   }

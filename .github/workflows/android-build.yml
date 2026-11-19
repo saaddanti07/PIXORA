@@ -15,6 +15,11 @@ concurrency:
   group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
+# Needed so a failing verification run can post its output back to the commit
+# (the Actions log archive is not always reachable from every environment).
+permissions:
+  contents: write
+
 env:
   FLUTTER_VERSION: '3.50.0'
   JAVA_VERSION: '21'
@@ -26,10 +31,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -53,10 +58,39 @@ jobs:
         run: flutter gen-l10n
 
       - name: Static analysis
-        run: flutter analyze
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee analysis.log
+          echo "ANALYZE_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
 
       - name: Run tests
-        run: flutter test --reporter expanded
+        run: |
+          set +e
+          flutter test --reporter expanded 2>&1 | tee test.log
+          echo "TEST_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+
+      - name: Publish failure details on the commit
+        if: env.ANALYZE_EXIT != '0' || env.TEST_EXIT != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "### flutter analyze — exit ${ANALYZE_EXIT}"
+            echo '```'
+            tail -c 30000 analysis.log
+            echo '```'
+            echo
+            echo "### flutter test — exit ${TEST_EXIT}"
+            echo '```'
+            tail -c 40000 test.log
+            echo '```'
+          } > verification-report.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@verification-report.md || echo "could not attach report"
+
+      - name: Fail when analysis or tests failed
+        if: env.ANALYZE_EXIT != '0' || env.TEST_EXIT != '0'
+        run: exit 1
 
   build-apk:
     name: Build debug APK
@@ -64,10 +98,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -98,7 +132,7 @@ jobs:
             --build-number "${{ github.run_number }}"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pixora-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk

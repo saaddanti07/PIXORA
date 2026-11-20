@@ -420,6 +420,10 @@ rendered deterministically, so every density stays pixel-crisp and perfectly cen
 | 04 | Restoration, face restoration, colourisation, artistic styles, pixel art |
 | 05 | AdMob, release signing, Play Store release |
 
+> The Phase 02 feasibility audit ([`docs/PHASE_02_STEP1_MODEL_AUDIT.md`](docs/PHASE_02_STEP1_MODEL_AUDIT.md))
+> proposes a re-ordering of phases 02–04 (AI restoration earlier, no model download manager,
+> face restoration deferred). It is a proposal awaiting approval; the table above is unchanged.
+
 ---
 
 **PIXORA** — the app name is always `PIXORA`, never `PIXORA AI`. AI is a technology inside the

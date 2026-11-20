@@ -149,6 +149,11 @@ Design decisions:
 Phase 02/03 will add real classes, register them, and (optionally) surface
 `registry.isAvailable(tool)` in the home grid.
 
+The model, runtime and tiling decisions for the first real engine are audited in
+[`PHASE_02_STEP1_MODEL_AUDIT.md`](PHASE_02_STEP1_MODEL_AUDIT.md). That report is
+the authority for anything size-, speed- or licence-related; nothing in it may be
+implemented before it is approved.
+
 ## 9. Advertising placement (not implemented)
 
 When AdMob lands, the intended seams are:

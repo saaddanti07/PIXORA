@@ -23,8 +23,107 @@ permissions:
 env:
   FLUTTER_VERSION: '3.50.0'
   JAVA_VERSION: '21'
+  MODEL_DIR: android/app/src/main/assets/models
+  MODEL_FILE: realesr_general_x4v3_fp32.tflite
 
 jobs:
+  # Phase 02, Step 2 — build the LiteRT model from the pinned upstream weights
+  # and prove it is numerically faithful before anything is allowed to bundle it.
+  prepare-model:
+    name: Prepare LiteRT model
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: tool/requirements-model.txt
+
+      - name: Restore a previously converted model
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            android/app/src/main/assets/models
+            models/report.json
+          key: model-${{ hashFiles('tool/convert_model.py', 'models/weights.sha256', 'tool/requirements-model.txt') }}
+
+      - name: Install conversion toolchain
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -r tool/requirements-model.txt
+          python -c "import torch, litert_torch, ai_edge_litert; \
+                     print('torch', torch.__version__); \
+                     print('litert_torch', getattr(litert_torch, '__version__', '?')); \
+                     print('ai_edge_litert', getattr(ai_edge_litert, '__version__', '?'))"
+
+      - name: Convert and verify the model
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          python tool/convert_model.py \
+            --out "$MODEL_DIR/$MODEL_FILE" \
+            --report models/report.json
+
+      - name: Summarise the model report
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          report = json.loads(pathlib.Path("models/report.json").read_text())
+          model, fidelity = report["model"], report["fidelity"]
+          lines = [
+            "### Phase 02 model pipeline",
+            "",
+            "| Field | Value |",
+            "| --- | --- |",
+            f"| model | `{model['id']}` ({model['architecture']}) |",
+            f"| licence | {model['license']} |",
+            f"| parameters | {model['parameters']:,} |",
+            f"| weights | {model['weightsBytes']:,} bytes |",
+            f"| weights sha256 | `{model['weightsSha256']}` |",
+            f"| tflite | {model['tfliteBytes']:,} bytes |",
+            f"| tflite sha256 | `{model['tfliteSha256']}` |",
+            f"| backend | {report['conversion']['backend']} |",
+            f"| min correlation | **{fidelity['minCorrelation']:.6f}** |",
+            f"| max abs error | {fidelity['maxAbsError'] * 255:.2f}/255 |",
+            f"| gate | {'PASS' if fidelity['passed'] else 'FAIL'} |",
+            f"| runner latency | {report['timing']['perTileMs']} ms/tile ({report['timing']['hostCpus']} cpus, not a phone) |",
+            "",
+          ]
+          pathlib.Path("model-summary.md").write_text("\n".join(lines))
+          print("\n".join(lines))
+          PY
+          cat model-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify the artefact against its own report
+        run: |
+          set -euo pipefail
+          MODEL="$MODEL_DIR/$MODEL_FILE"
+          test -f "$MODEL" || { echo "model missing: $MODEL"; exit 1; }
+          EXPECTED=$(python -c "import json;print(json.load(open('models/report.json'))['model']['tfliteSha256'])")
+          ACTUAL=$(sha256sum "$MODEL" | cut -d' ' -f1)
+          echo "expected $EXPECTED"
+          echo "actual   $ACTUAL"
+          test "$EXPECTED" = "$ACTUAL" || { echo "model digest mismatch"; exit 1; }
+          ls -l "$MODEL_DIR"
+
+      - name: Upload the model artefact
+        uses: actions/upload-artifact@v6
+        with:
+          name: pixora-litert-model
+          path: |
+            android/app/src/main/assets/models
+            models/report.json
+            model-summary.md
+          if-no-files-found: error
+          retention-days: 30
+
   analyze-and-test:
     name: Analyze and test
     runs-on: ubuntu-latest
@@ -94,8 +193,9 @@ jobs:
 
   build-apk:
     name: Build debug APK
+    needs: prepare-model
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Check out the repository
         uses: actions/checkout@v5
@@ -113,6 +213,22 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Fetch the verified model
+        uses: actions/download-artifact@v6
+        with:
+          name: pixora-litert-model
+          path: .model-artifact
+
+      - name: Place the model in the Android assets
+        run: |
+          set -euo pipefail
+          mkdir -p "$MODEL_DIR"
+          ls -l .model-artifact
+          find .model-artifact -name '*.tflite' -print -exec cp {} "$MODEL_DIR/" \;
+          find .model-artifact -name '*.meta.json' -print -exec cp {} "$MODEL_DIR/" \;
+          test -f "$MODEL_DIR/$MODEL_FILE" || { echo "model missing after download"; exit 1; }
+          ls -l "$MODEL_DIR"
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -129,7 +245,7 @@ jobs:
         run: |
           set +e
           flutter build apk --debug \
-            --build-name "0.1.1" \
+            --build-name "0.2.0" \
             --build-number "${{ github.run_number }}" \
             --dart-define "PIXORA_BUILD=${{ github.run_number }}" 2>&1 | tee build.log
           echo "BUILD_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
@@ -152,6 +268,24 @@ jobs:
       - name: Stop when the build failed
         if: env.BUILD_EXIT != '0'
         run: exit 1
+
+      - name: Confirm the model ships inside the APK
+        run: |
+          set -euo pipefail
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          SIZE=$(stat -c %s "$APK")
+          echo "apk bytes: $SIZE"
+          unzip -l "$APK" | grep -E 'assets/models/' || {
+            echo "the model is not inside the APK"; exit 1; }
+          {
+            echo "### Debug APK"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| size | ${SIZE} bytes ($(python3 -c "print(f'{$SIZE/1048576:.2f}')") MiB) |"
+            echo "| model bundle | $(unzip -l "$APK" | grep -c 'assets/models/') file(s) |"
+            echo "| build stamp | ${{ github.run_number }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v6

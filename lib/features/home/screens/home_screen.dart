@@ -3,6 +3,8 @@ import 'package:pixora/app/localization/l10n.dart';
 import 'package:pixora/app/theme/app_spacing.dart';
 import 'package:pixora/core/widgets/section_header.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
+import 'package:pixora/features/image_engine/models/processing_policy.dart';
+import 'package:pixora/features/image_engine/services/image_engine_registry.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
 import 'package:pixora/features/home/data/creative_tools.dart';
 import 'package:pixora/features/home/widgets/coming_soon_sheet.dart';
@@ -24,6 +26,8 @@ class HomeScreen extends StatefulWidget {
     required this.onOpenSettings,
     required this.onOpenHistory,
     this.selectionController,
+    this.engineRegistry,
+    this.processingPolicy,
     super.key,
   });
 
@@ -33,6 +37,12 @@ class HomeScreen extends StatefulWidget {
 
   /// Injected in tests; production builds create the device-backed controller.
   final ImageSelectionController? selectionController;
+
+  /// The processors this build can run; forwarded to the preview screen.
+  final ImageEngineRegistry? engineRegistry;
+
+  /// Device-derived processing limits; forwarded to the preview screen.
+  final ProcessingPolicy? processingPolicy;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -82,6 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (BuildContext context) => ImagePreviewScreen(
           image: image,
           onPickAnother: _selectionController.pickImage,
+          engineRegistry: widget.engineRegistry,
+          historyRepository: widget.historyRepository,
+          processingPolicy: widget.processingPolicy,
         ),
       ),
     );

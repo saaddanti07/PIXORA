@@ -113,6 +113,23 @@ jobs:
           test "$EXPECTED" = "$ACTUAL" || { echo "model digest mismatch"; exit 1; }
           ls -l "$MODEL_DIR"
 
+      - name: Publish the model report on the commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            cat model-summary.md
+            echo
+            echo '<details><summary>models/report.json</summary>'
+            echo
+            echo '```json'
+            head -c 12000 models/report.json
+            echo '```'
+            echo '</details>'
+          } > model-report.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@model-report.md || echo "could not attach the model report"
+
       - name: Upload the model artefact
         uses: actions/upload-artifact@v6
         with:
@@ -286,6 +303,30 @@ jobs:
             echo "| model bundle | $(unzip -l "$APK" | grep -c 'assets/models/') file(s) |"
             echo "| build stamp | ${{ github.run_number }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish the delivery summary on the commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          {
+            echo "### Debug APK — Phase 02"
+            echo
+            echo '| Field | Value |'
+            echo '| --- | --- |'
+            echo "| apk bytes | $(stat -c %s "$APK") |"
+            echo "| model files in apk | $(unzip -l "$APK" | grep -c 'assets/models/') |"
+            echo '| model entries |'
+            echo '```'
+            unzip -l "$APK" | grep 'assets/models/' || true
+            echo '```'
+            echo "| native libraries |"
+            echo '```'
+            unzip -l "$APK" | grep -E '\.so$' | awk '{print $1, $4}' | sort -k2 || true
+            echo '```'
+          } > apk-summary.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@apk-summary.md || echo "could not attach the apk summary"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v6

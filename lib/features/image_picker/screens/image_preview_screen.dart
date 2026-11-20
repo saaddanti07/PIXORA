@@ -5,11 +5,17 @@ import 'package:pixora/app/localization/l10n.dart';
 import 'package:pixora/app/theme/app_colors.dart';
 import 'package:pixora/app/theme/app_spacing.dart';
 import 'package:pixora/app/theme/pixora_palette.dart';
+import 'package:pixora/features/history/data/history_repository.dart';
+import 'package:pixora/features/image_engine/interfaces/image_processor.dart';
+import 'package:pixora/features/image_engine/models/processing_policy.dart';
+import 'package:pixora/features/image_engine/models/processing_tool.dart';
+import 'package:pixora/features/image_engine/services/image_engine_registry.dart';
 import 'package:pixora/features/image_picker/models/image_selection_messages.dart';
 import 'package:pixora/features/image_picker/models/picked_image.dart';
 import 'package:pixora/features/image_picker/services/image_selection_controller.dart';
 import 'package:pixora/features/image_picker/widgets/photo_details_card.dart';
 import 'package:pixora/features/image_picker/widgets/photo_preview_frame.dart';
+import 'package:pixora/features/processing/screens/processing_screen.dart';
 
 /// Shows the photo the user picked, its real dimensions, and the two actions
 /// that exist in Phase 01: pick another photo, or go back.
@@ -20,6 +26,9 @@ class ImagePreviewScreen extends StatefulWidget {
   const ImagePreviewScreen({
     required this.image,
     required this.onPickAnother,
+    this.engineRegistry,
+    this.historyRepository,
+    this.processingPolicy,
     super.key,
   });
 
@@ -30,6 +39,17 @@ class ImagePreviewScreen extends StatefulWidget {
   /// may throw [ImageSelectionException].
   final Future<PickedImage?> Function() onPickAnother;
 
+  /// The processors this build can run. When absent (widget tests, or a build
+  /// without the engine) the processing actions are not shown at all, so the
+  /// screen can never offer a tool that cannot work.
+  final ImageEngineRegistry? engineRegistry;
+
+  /// Where a finished result is recorded.
+  final HistoryRepository? historyRepository;
+
+  /// The Smart AI Engine limits for this device.
+  final ProcessingPolicy? processingPolicy;
+
   @override
   State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
 }
@@ -37,6 +57,34 @@ class ImagePreviewScreen extends StatefulWidget {
 class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   late PickedImage _image = widget.image;
   bool _isPicking = false;
+
+  PixoraImageProcessor? get _restoreProcessor => widget.historyRepository == null
+      ? null
+      : widget.engineRegistry?.processorFor(ProcessingToolId.oldPhotoRestoration);
+
+  PixoraImageProcessor? get _fastProcessor => widget.historyRepository == null
+      ? null
+      : widget.engineRegistry?.processorFor(ProcessingToolId.photoEnhancement);
+
+  bool get _hasProcessing => _restoreProcessor != null || _fastProcessor != null;
+
+  Future<void> _process(ProcessingToolId tool, PixoraImageProcessor processor) async {
+    final HistoryRepository? history = widget.historyRepository;
+    if (history == null) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => ProcessingScreen(
+          source: _image,
+          tool: tool,
+          processor: processor,
+          historyRepository: history,
+          maxOutputDimension: widget.processingPolicy?.maxOutputDimension,
+        ),
+      ),
+    );
+  }
 
   Future<void> _pickAnother() async {
     if (_isPicking) {
@@ -129,6 +177,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             const SizedBox(height: AppSpacing.md),
             PhotoDetailsCard(image: _image),
             const SizedBox(height: AppSpacing.md),
+            if (!_hasProcessing)
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
@@ -164,6 +213,29 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+            if (_restoreProcessor != null)
+              FilledButton.icon(
+                onPressed: () => _process(
+                  ProcessingToolId.oldPhotoRestoration,
+                  _restoreProcessor!,
+                ),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                label: Text(l10n.processingRestoreAction),
+              ),
+            if (_restoreProcessor != null) const SizedBox(height: AppSpacing.xs),
+            if (_fastProcessor != null)
+              OutlinedButton.icon(
+                onPressed: () => _process(
+                  ProcessingToolId.photoEnhancement,
+                  _fastProcessor!,
+                ),
+                icon: const Icon(Icons.tune_rounded, size: 18),
+                label: Text(l10n.processingEnhanceAction),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.brandPrimary,
+                ),
+              ),
+            if (_fastProcessor != null) const SizedBox(height: AppSpacing.xs),
             FilledButton.icon(
               onPressed: _isPicking ? null : _pickAnother,
               icon: _isPicking

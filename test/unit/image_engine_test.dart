@@ -6,7 +6,7 @@ import 'package:pixora/features/image_engine/services/image_engine_registry.dart
 import 'package:pixora/features/image_engine/services/model_registry.dart';
 
 void main() {
-  test('Phase 01 ships no processing capability at all', () {
+  test('the empty registry still offers nothing at all', () {
     const ImageEngineRegistry registry = ImageEngineRegistry.empty();
 
     expect(registry.isEmpty, isTrue);
@@ -17,16 +17,48 @@ void main() {
     }
   });
 
-  test('every planned model is marked as planned, never as available', () {
+  test('models that are not shipped stay planned and claim no size', () {
     expect(ModelRegistry.planned, isNotEmpty);
     for (final ModelSpec model in ModelRegistry.planned) {
       expect(model.availability, ModelAvailability.planned);
       // No unverified download sizes are advertised to users.
       expect(model.approximateSizeBytes, isNull);
+      expect(model.requiresDownload, isTrue);
     }
   });
 
-  test('the device profiler refuses to invent hardware numbers', () {
+  test('shipped models are bundled, offline and carry a measured size', () {
+    expect(ModelRegistry.bundled, hasLength(2));
+    for (final ModelSpec model in ModelRegistry.bundled) {
+      expect(model.availability, ModelAvailability.bundled);
+      expect(model.requiresDownload, isFalse);
+    }
+
+    final ModelSpec restoration = ModelRegistry.restoration;
+    expect(restoration.backend, InferenceBackend.liteRt);
+    expect(restoration.id, 'real_esrgan_general_x4v3');
+    // The real artefact is between 4 and 8 MiB; a null or invented number
+    // here means the conversion pipeline and this constant have drifted apart.
+    expect(restoration.approximateSizeBytes, isNotNull);
+    expect(restoration.approximateSizeBytes!, greaterThan(4000000));
+    expect(restoration.approximateSizeBytes!, lessThan(8000000));
+
+    final ModelSpec classical = ModelRegistry.classicalEnhancement;
+    expect(classical.backend, InferenceBackend.nativeAlgorithm);
+    expect(classical.approximateSizeBytes, isNull);
+  });
+
+  test('the catalogue contains every model exactly once', () {
+    final Set<String> ids =
+        ModelRegistry.catalogue.map((ModelSpec model) => model.id).toSet();
+    expect(ids, hasLength(ModelRegistry.catalogue.length));
+    expect(ModelRegistry.catalogue.length,
+        ModelRegistry.bundled.length + ModelRegistry.planned.length);
+    expect(ModelRegistry.byId('real_esrgan_general_x4v3'), isNotNull);
+    expect(ModelRegistry.byId('does_not_exist'), isNull);
+  });
+
+  test('the Phase 01 profiler still refuses to invent hardware numbers', () {
     const UnavailableDeviceCapabilityProfiler profiler =
         UnavailableDeviceCapabilityProfiler();
 

@@ -99,6 +99,8 @@ class _PixoraAppState extends State<PixoraApp> {
         home: RootShell(
           imagePickerService: widget.bootstrap.imagePickerService,
           historyRepository: widget.bootstrap.historyRepository,
+          engineRegistry: widget.bootstrap.engineRegistry,
+          processingPolicy: widget.bootstrap.processingPolicy,
         ),
       ),
     );

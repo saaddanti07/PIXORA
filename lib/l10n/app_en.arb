@@ -118,5 +118,52 @@
   "settingsLicensesNote": "PIXORA is built with Flutter and open-source packages. Thank you to their authors.",
   "languageEnglish": "English",
   "languageArabic": "Arabic",
-  "languageFrench": "French"
+  "languageFrench": "French",
+  "processingTitle": "Restore photo",
+  "processingFastTitle": "Fast enhancement",
+  "processingPreparing": "Preparing your photo…",
+  "processingTiles": "Tile {completed} of {total}",
+  "@processingTiles": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "processingRemaining": "About {seconds} s remaining",
+  "@processingRemaining": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "processingOnDevice": "Runs entirely on your device. Nothing is uploaded.",
+  "processingCancel": "Cancel",
+  "processingCancelling": "Cancelling…",
+  "processingCancelledTitle": "Cancelled",
+  "processingCancelledBody": "Your original photo is untouched.",
+  "processingFailedTitle": "Could not process this photo",
+  "processingCompareHint": "Drag the handle to compare",
+  "processingOriginal": "Original",
+  "processingResult": "Result",
+  "processingAiBadge": "On-device AI",
+  "processingClassicalBadge": "Classical enhancement",
+  "processingSavedToHistory": "Saved to your History",
+  "processingDuration": "Took {seconds} s",
+  "@processingDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "processingClose": "Close",
+  "processingTryAgain": "Try again",
+  "processingRestoreAction": "Restore with AI",
+  "processingEnhanceAction": "Fast enhancement",
+  "processingAiUnavailable": "AI restoration is not available in this build. Fast enhancement still works."
 }

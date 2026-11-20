@@ -3,6 +3,8 @@ import 'package:pixora/app/localization/l10n.dart';
 import 'package:pixora/core/services/image_picker_service.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
 import 'package:pixora/features/history/screens/history_screen.dart';
+import 'package:pixora/features/image_engine/models/processing_policy.dart';
+import 'package:pixora/features/image_engine/services/image_engine_registry.dart';
 import 'package:pixora/features/home/screens/home_screen.dart';
 import 'package:pixora/features/image_picker/models/picked_image.dart';
 import 'package:pixora/features/image_picker/screens/image_preview_screen.dart';
@@ -19,11 +21,19 @@ class RootShell extends StatefulWidget {
   const RootShell({
     required this.imagePickerService,
     required this.historyRepository,
+    this.engineRegistry = const ImageEngineRegistry.empty(),
+    this.processingPolicy = ProcessingPolicy.conservative,
     super.key,
   });
 
   final ImagePickerService imagePickerService;
   final HistoryRepository historyRepository;
+
+  /// Real processors in production; empty in widget tests unless a test opts in.
+  final ImageEngineRegistry engineRegistry;
+
+  /// Smart AI Engine limits derived from the device at start-up.
+  final ProcessingPolicy processingPolicy;
 
   @override
   State<RootShell> createState() => _RootShellState();
@@ -100,6 +110,9 @@ class _RootShellState extends State<RootShell>
           builder: (BuildContext context) => ImagePreviewScreen(
             image: image,
             onPickAnother: _selectionController.pickImage,
+            engineRegistry: widget.engineRegistry,
+            historyRepository: widget.historyRepository,
+            processingPolicy: widget.processingPolicy,
           ),
         ),
       );
@@ -129,6 +142,8 @@ class _RootShellState extends State<RootShell>
           HomeScreen(
             historyRepository: widget.historyRepository,
             selectionController: _selectionController,
+            engineRegistry: widget.engineRegistry,
+            processingPolicy: widget.processingPolicy,
             onOpenSettings: () => _select(_settingsIndex),
             onOpenHistory: () => _select(_historyIndex),
           ),

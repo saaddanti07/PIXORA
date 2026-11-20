@@ -132,10 +132,24 @@ PixoraImageProcessor          (toolId, availability, models, process)
   ├─ ArtisticStyleService     stylize()
   └─ PixelArtService          convert()
 
-ImageEngineRegistry           which processors exist in this build (empty in Phase 01)
-ModelRegistry                 what models are planned (all ModelAvailability.planned)
+ImageEngineRegistry           which processors exist in this build
+ModelRegistry                 bundled models (measured) + planned ones (no claims)
 DeviceCapabilityProfiler      interface; UnavailableDeviceCapabilityProfiler throws
+                              AndroidDeviceCapabilityProfiler reads the platform
 ```
+
+Phase 02 implementations:
+
+| Layer | Class | Notes |
+| --- | --- | --- |
+| Dart | `LiteRtRestorationProcessor` | applies the device policy, calls the channel, maps errors |
+| Dart | `ClassicalEnhancementProcessor` | Fast enhancement, no model |
+| Dart | `ProcessingPolicy` | per-device working size, output cap, tile budget |
+| Dart | `ProcessingScreen` | real progress, ETA, cancel, before/after comparison |
+| Native | `EngineChannel` | the only MethodChannel (`pixora/engine`); paths, not pixels |
+| Native | `SuperResolutionEngine` | sampled decode, mirror padding, tiled LiteRT, JPEG |
+| Native | `LiteRtRunner` | one interpreter, reused buffers, model mapped from the APK |
+| Native | `ClassicalEnhancer` | levels, saturation, unsharp mask |
 
 Design decisions:
 
@@ -150,9 +164,10 @@ Phase 02/03 will add real classes, register them, and (optionally) surface
 `registry.isAvailable(tool)` in the home grid.
 
 The model, runtime and tiling decisions for the first real engine are audited in
-[`PHASE_02_STEP1_MODEL_AUDIT.md`](PHASE_02_STEP1_MODEL_AUDIT.md). That report is
-the authority for anything size-, speed- or licence-related; nothing in it may be
-implemented before it is approved.
+[`PHASE_02_STEP1_MODEL_AUDIT.md`](PHASE_02_STEP1_MODEL_AUDIT.md), implemented per
+[`PHASE_02_REPORT.md`](PHASE_02_REPORT.md), and measured per
+[`PHASE_02_BENCHMARKS.md`](PHASE_02_BENCHMARKS.md). The audit is the authority for
+anything size-, speed- or licence-related.
 
 ## 9. Advertising placement (not implemented)
 

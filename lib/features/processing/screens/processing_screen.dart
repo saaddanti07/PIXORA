@@ -51,7 +51,6 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   String? _error;
   bool _cancelling = false;
   StreamSubscription<EngineProgress>? _subscription;
-  late final DateTime _started = DateTime.now();
 
   bool get _usesAi => widget.tool == ProcessingToolId.oldPhotoRestoration;
 
@@ -82,14 +81,12 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
       _cancelling = false;
     });
 
-    final PixoraImageProcessor processor = widget.processor;
-    if (processor is ProgressAwareProcessor) {
-      _subscription = processor.progress.listen((EngineProgress event) {
-        if (mounted) {
-          setState(() => _progress = event);
-        }
-      });
-    }
+    final ProgressAwareProcessor? aware = _progressAware();
+    _subscription = aware?.progress.listen((EngineProgress event) {
+      if (mounted) {
+        setState(() => _progress = event);
+      }
+    });
 
     ImageProcessingResult result;
     try {
@@ -156,10 +153,13 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
       return;
     }
     setState(() => _cancelling = true);
+    await _progressAware()?.cancelActiveJob();
+  }
+
+  /// The processor exposing progress/cancel, if it has one.
+  ProgressAwareProcessor? _progressAware() {
     final PixoraImageProcessor processor = widget.processor;
-    if (processor is ProgressAwareProcessor) {
-      await processor.cancelActiveJob();
-    }
+    return processor is ProgressAwareProcessor ? processor : null;
   }
 
   @override
@@ -227,7 +227,7 @@ class _RunningView extends StatelessWidget {
     final PixoraPalette palette = PixoraPalette.of(context);
     final TextTheme textTheme = Theme.of(context).textTheme;
     final EngineProgress? details = progress;
-    final double? fraction = details == null ? null : details.fraction;
+    final double? fraction = details?.fraction;
     final Duration? remaining = details?.estimatedRemaining;
 
     return Column(

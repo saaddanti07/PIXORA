@@ -11,10 +11,10 @@ licence and for the fidelity numbers quoted in
 | --- | --- |
 | Model | Real-ESRGAN `realesr-general-x4v3` |
 | Architecture | `SRVGGNetCompact` (33 convs @ input resolution, `PixelShuffle` ×4, nearest-neighbour residual) |
-| Parameters | 1,210,720 |
+| Parameters | 1,213,296 |
 | Upstream | <https://github.com/xinntao/Real-ESRGAN> |
 | Licence | **BSD-3-Clause** — see [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) |
-| Weights | `v0.2.5.0` release asset, 4,885,111 bytes |
+| Weights | `v0.2.5.0` release asset, 4,885,111 bytes (SHA-256 pinned below) |
 | Weights URL | <https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth> |
 | SHA-256 | pinned in [`weights.sha256`](weights.sha256) |
 
@@ -49,6 +49,10 @@ The script exits non-zero — and produces no model — unless:
 - the checkpoint's own tensors confirm `num_feat=64`, `num_conv=32`, `upscale=4`;
 - the converted model agrees with the PyTorch reference on seven deterministic
   fixtures with **Pearson correlation ≥ 0.995** and max absolute error ≤ 0.02.
+
+First verified run (CI run 44773378380): correlation **1.000000**, max error
+**0.00/255**, LiteRT artefact **4,910,280 bytes**, SHA-256
+`cedda0d6c8f59c3eca8558e7002a571f5437079d922a486068384599b2d0ddab`.
 
 No photograph — and certainly no user photograph — is used anywhere in that
 process; the fixtures are procedurally generated from fixed seeds.

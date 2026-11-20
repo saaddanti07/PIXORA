@@ -10,6 +10,7 @@ import 'package:pixora/core/utilities/image_format.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
 import 'package:pixora/features/image_engine/interfaces/image_processor.dart';
+import 'package:pixora/features/image_engine/interfaces/image_restoration_service.dart';
 import 'package:pixora/features/image_engine/interfaces/progress_aware_processor.dart';
 import 'package:pixora/features/image_engine/models/image_processing_request.dart';
 import 'package:pixora/features/image_engine/models/image_processing_result.dart';
@@ -23,7 +24,7 @@ import '../helpers/image_fixtures.dart';
 
 /// A processor double that reports one progress event and then finishes.
 class FakeRestorationProcessor
-    implements PixoraImageProcessor, ProgressAwareProcessor {
+    implements ImageRestorationService, ProgressAwareProcessor {
   FakeRestorationProcessor({
     required this.result,
     this.emitProgress = true,
@@ -271,7 +272,7 @@ void main() {
 }
 
 /// Emits progress on demand and finishes when the test says so.
-class _HangingProcessor implements PixoraImageProcessor, ProgressAwareProcessor {
+class _HangingProcessor implements ImageRestorationService, ProgressAwareProcessor {
   _HangingProcessor(this._pending);
 
   final Completer<ImageProcessingResult> _pending;

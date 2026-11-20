@@ -91,7 +91,7 @@ abstract final class ModelRegistry {
   /// Exact size of the bundled `.tflite` file, as measured by the conversion
   /// pipeline. Kept in sync by hand with `models/report.json`; the CI job fails
   /// if the APK does not contain a model with this digest.
-  static const int restorationModelBytes = 4937168;
+  static const int restorationModelBytes = 4910280;
 
   static ModelSpec? byId(String id) {
     for (final ModelSpec spec in catalogue) {

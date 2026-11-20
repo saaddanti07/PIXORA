@@ -260,9 +260,9 @@ class NativeEngineChannel {
         'jobId': jobId,
         'sourcePath': sourcePath,
         'outputPath': outputPath,
-        if (maxInputPixels != null) 'maxInputPixels': maxInputPixels,
-        if (maxOutputDimension != null) 'maxOutputDimension': maxOutputDimension,
-        if (halo != null) 'halo': halo,
+        'maxInputPixels': ?maxInputPixels,
+        'maxOutputDimension': ?maxOutputDimension,
+        'halo': ?halo,
         'jpegQuality': jpegQuality,
       },
     );
@@ -285,7 +285,7 @@ class NativeEngineChannel {
         'jobId': jobId,
         'sourcePath': sourcePath,
         'outputPath': outputPath,
-        if (maxOutputDimension != null) 'maxOutputDimension': maxOutputDimension,
+        'maxOutputDimension': ?maxOutputDimension,
         'jpegQuality': jpegQuality,
       },
     );

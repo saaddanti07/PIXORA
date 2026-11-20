@@ -141,9 +141,10 @@ void main() {
         maxOutputDimension: 2048,
         halo: 0,
       );
+      // 512/128 = 4 columns, 384/128 = 3 rows.
       expect(
         noHalo.tileCountFor(workingWidth: 512, workingHeight: 384, tileSize: 128),
-        16,
+        12,
       );
     });
 

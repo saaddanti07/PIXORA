@@ -7,7 +7,6 @@ import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 
 /**
@@ -68,6 +67,7 @@ class LiteRtRunner private constructor(
                 setNumThreads(threads.coerceAtLeast(1))
             }
             val model = loadModel(context, modelAsset)
+                ?: throw IllegalStateException("model asset $modelAsset is unreadable")
             val interpreter = Interpreter(model, options)
             interpreter.allocateTensors()
 
@@ -83,7 +83,7 @@ class LiteRtRunner private constructor(
          * falls back to reading it into a direct buffer when the asset is
          * compressed or not file-backed.
          */
-        private fun loadModel(context: Context, assetPath: String): MappedByteBuffer? {
+        private fun loadModel(context: Context, assetPath: String): ByteBuffer? {
             return try {
                 context.assets.openFd(assetPath).use { descriptor ->
                     FileInputStream(descriptor.fileDescriptor).use { stream ->

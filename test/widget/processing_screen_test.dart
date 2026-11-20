@@ -92,6 +92,17 @@ class FakeRestorationProcessor
 Future<Directory> _tempDirectory() async =>
     Directory.systemTemp.createTemp('pixora_processing_screen');
 
+/// Pumps a fixed number of frames.
+///
+/// `pumpAndSettle` cannot be used while an indeterminate progress indicator is on
+/// screen: it animates forever by design, which is exactly what we want the user
+/// to see while the engine works.
+Future<void> settle(WidgetTester tester, {int frames = 16}) async {
+  for (int i = 0; i < frames; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 void main() {
   late Directory temp;
   late String imagePath;
@@ -140,6 +151,10 @@ void main() {
       ),
     );
 
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     await tester.pumpWidget(
       wrap(
         ProcessingScreen(
@@ -155,7 +170,7 @@ void main() {
     expect(processor.calls, 1);
     expect(processor.lastRequest?.maxOutputDimension, 2048);
 
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('On-device AI'), findsOneWidget);
     expect(find.text('Drag the handle to compare'), findsOneWidget);
@@ -209,7 +224,7 @@ void main() {
     );
 
     pending.complete(const ImageProcessingResult.cancelled());
-    await tester.pumpAndSettle();
+    await settle(tester);
   });
 
   testWidgets('cancel really asks the processor to stop', (WidgetTester tester) async {
@@ -235,7 +250,7 @@ void main() {
     await tester.pump();
     expect(processor.cancellations, 1);
 
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.text('Cancelled'), findsOneWidget);
     expect(find.text('Your original photo is untouched.'), findsOneWidget);
     expect(history.load(), isEmpty);
@@ -259,13 +274,13 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Could not process this photo'), findsOneWidget);
     expect(find.text('out of memory'), findsOneWidget);
 
     await tester.tap(find.text('Try again'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(processor.calls, 2);
   });
 }

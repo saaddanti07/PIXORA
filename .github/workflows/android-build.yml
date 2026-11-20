@@ -274,8 +274,15 @@ jobs:
         run: |
           {
             echo "### flutter build apk --debug — exit ${BUILD_EXIT}"
+            echo
+            echo 'Compile errors and Gradle failures:'
             echo '```'
-            tail -c 50000 build.log
+            grep -nE "^e: |error:|error\b|FAILURE:|What went wrong|Caused by|^> " build.log | tail -80 || true
+            echo '```'
+            echo
+            echo 'Tail:'
+            echo '```'
+            tail -c 12000 build.log
             echo '```'
           } > build-report.md
           gh api -X POST \

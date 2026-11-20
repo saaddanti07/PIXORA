@@ -108,6 +108,10 @@ Future<void> settle(WidgetTester tester, {int frames = 16}) async {
   for (int i = 0; i < frames; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+  // Lets real file I/O (the images on screen) and any root-zone microtask
+  // complete, then paints whatever state that produced.
+  await tester.runAsync(() async {});
+  await tester.pump();
 }
 
 void main() {

@@ -57,9 +57,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   @override
   void initState() {
     super.initState();
-    // Deferred to the first frame so the very first setState never runs while
-    // this widget is still being mounted.
-    WidgetsBinding.instance.addPostFrameCallback((Duration _) {
+    // Started on a microtask: the first setState must not run while this widget
+    // is still being mounted, and the job must not wait for a frame either.
+    Future<void>.microtask(() {
       if (mounted) {
         _run();
       }
@@ -100,7 +100,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
     } on Object catch (error) {
       result = ImageProcessingResult.failed(error.toString());
     } finally {
-      await _subscription?.cancel();
+      // Deliberately not awaited: a completed job must not depend on the
+      // stream teardown to publish its result.
+      _subscription?.cancel();
       _subscription = null;
     }
 

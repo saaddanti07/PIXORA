@@ -34,7 +34,7 @@ network calls were added. Phase 03 has not been started.
 | Model | Real-ESRGAN `realesr-general-x4v3` (SRVGGNetCompact) | upstream release |
 | Source weights | 4,885,111 bytes | GitHub Releases API |
 | Weights SHA-256 | `8dc7edb9ac80ccdc30c3a5dca6616509367f05fbc184ad95b731f05bece96292` | measured, then **pinned** in `models/weights.sha256` |
-| Licence | **BSD-3-Clause** | `xinntao/Real-ESRGAN` |
+| Licence | **BSD-3-Clause** | `xinntao/Real-ESRGAN` — full text in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and in-app under Settings → About → Open-source licenses |
 | Parameters | 1,213,296 | counted from the checkpoint |
 | LiteRT artefact | **4,910,280 bytes (4.68 MiB)** | produced by `tool/convert_model.py` |
 | Artefact SHA-256 | `cedda0d6c8f59c3eca8558e7002a571f5437079d922a486068384599b2d0ddab` | recorded in `models/report.json`, asserted by CI |
@@ -130,7 +130,7 @@ the working size when a reduction happened. Anything outside the budget goes to
 | Modelled cost per megapixel | 61 tiles | arithmetic |
 | Flutter tests | **104 passing**, 0 failing | CI |
 | `flutter analyze` | **No issues found!** | CI |
-| Debug APK | **171,769,109 bytes (163.8 MiB)** | CI artifact |
+| Debug APK | **171,772,517 bytes (163.8 MiB)** | CI artifact |
 | Model inside the APK | `assets/models/realesr_general_x4v3_fp32.tflite` — 4,910,280 B | CI asserts it |
 | LiteRT native library | 3.55 MB (arm64) · 2.37 MB (armeabi-v7a) | APK listing |
 

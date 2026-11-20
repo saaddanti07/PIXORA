@@ -23,7 +23,10 @@ void main() {
       expect(model.availability, ModelAvailability.planned);
       // No unverified download sizes are advertised to users.
       expect(model.approximateSizeBytes, isNull);
-      expect(model.requiresDownload, isTrue);
+      // Anything neural has to be fetched; a pure Dart algorithm does not.
+      if (model.backend != InferenceBackend.nativeAlgorithm) {
+        expect(model.requiresDownload, isTrue);
+      }
     }
   });
 

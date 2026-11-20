@@ -147,11 +147,13 @@ void main() {
       final Completer<Map<Object?, Object?>> pending =
           Completer<Map<Object?, Object?>>();
       String? cancelledJob;
+      bool restoreStarted = false;
       messenger.setMockMethodCallHandler(_channel, (MethodCall call) async {
         if (call.method == 'cancel') {
           cancelledJob = (call.arguments as Map<Object?, Object?>)['jobId'] as String?;
           return true;
         }
+        restoreStarted = true;
         return pending.future;
       });
       final NativeEngineChannel channel = NativeEngineChannel(channel: _channel);
@@ -172,7 +174,12 @@ void main() {
           tool: ProcessingToolId.oldPhotoRestoration,
         ),
       );
-      await Future<void>.delayed(Duration.zero);
+      // Wait until the job has really reached the engine: the processor checks
+      // the source file first, so this is not synchronous.
+      for (int i = 0; i < 100 && !restoreStarted; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 2));
+      }
+      expect(restoreStarted, isTrue);
       await processor.cancelActiveJob();
       expect(cancelledJob, isNotNull);
       pending.completeError(PlatformException(code: 'cancelled'));

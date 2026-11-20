@@ -9,7 +9,6 @@ import 'package:pixora/core/storage/in_memory_key_value_store.dart';
 import 'package:pixora/core/utilities/image_format.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
-import 'package:pixora/features/image_engine/interfaces/image_processor.dart';
 import 'package:pixora/features/image_engine/interfaces/image_restoration_service.dart';
 import 'package:pixora/features/image_engine/interfaces/progress_aware_processor.dart';
 import 'package:pixora/features/image_engine/models/image_processing_request.dart';

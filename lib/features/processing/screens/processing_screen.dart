@@ -90,7 +90,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
 
     ImageProcessingResult result;
     try {
-      result = await processor.process(
+      result = await widget.processor.process(
         ImageProcessingRequest(
           sourcePath: widget.source.path,
           tool: widget.tool,
@@ -157,9 +157,16 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   }
 
   /// The processor exposing progress/cancel, if it has one.
+  ///
+  /// The declared type is `Object` on purpose: promotion from the processor
+  /// interface to the optional capability interface is not applied by the
+  /// analyser, and an explicit cast keeps this honest and obvious.
   ProgressAwareProcessor? _progressAware() {
-    final PixoraImageProcessor processor = widget.processor;
-    return processor is ProgressAwareProcessor ? processor : null;
+    final Object processor = widget.processor;
+    if (processor is ProgressAwareProcessor) {
+      return processor;
+    }
+    return null;
   }
 
   @override

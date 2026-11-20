@@ -92,6 +92,13 @@ class FakeRestorationProcessor
 Future<Directory> _tempDirectory() async =>
     Directory.systemTemp.createTemp('pixora_processing_screen');
 
+/// Everything currently on screen, for diagnostics when an expectation fails.
+String visibleText(WidgetTester tester) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((Text text) => text.data ?? text.textSpan?.toPlainText() ?? '')
+    .where((String value) => value.isNotEmpty)
+    .join(' | ');
+
 /// Pumps a fixed number of frames.
 ///
 /// `pumpAndSettle` cannot be used while an indeterminate progress indicator is on
@@ -172,7 +179,8 @@ void main() {
 
     await settle(tester);
 
-    expect(find.text('On-device AI'), findsOneWidget);
+    expect(find.text('On-device AI'), findsOneWidget,
+        reason: 'visible: ${visibleText(tester)}');
     expect(find.text('Drag the handle to compare'), findsOneWidget);
     expect(find.text('Original'), findsOneWidget);
     expect(find.text('Result'), findsOneWidget);
@@ -251,7 +259,8 @@ void main() {
     expect(processor.cancellations, 1);
 
     await settle(tester);
-    expect(find.text('Cancelled'), findsOneWidget);
+    expect(find.text('Cancelled'), findsOneWidget,
+        reason: 'visible: ${visibleText(tester)}');
     expect(find.text('Your original photo is untouched.'), findsOneWidget);
     expect(history.load(), isEmpty);
   });
@@ -276,7 +285,8 @@ void main() {
     );
     await settle(tester);
 
-    expect(find.text('Could not process this photo'), findsOneWidget);
+    expect(find.text('Could not process this photo'), findsOneWidget,
+        reason: 'visible: ${visibleText(tester)}');
     expect(find.text('out of memory'), findsOneWidget);
 
     await tester.tap(find.text('Try again'));

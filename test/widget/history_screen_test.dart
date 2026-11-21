@@ -29,7 +29,7 @@ void main() {
       home: HistoryScreen(
         repository: repository,
         onStartRestoration: () {},
-        thumbnailBuilder: (_, __) => const SizedBox(width: 64, height: 64),
+        thumbnailBuilder: (_, _) => const SizedBox(width: 64, height: 64),
       ),
     ));
     expect(find.text('No processed photos yet'), findsOneWidget);

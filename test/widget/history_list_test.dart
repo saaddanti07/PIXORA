@@ -29,7 +29,7 @@ void main() {
       home: Scaffold(body: HistoryList(
         entries: <HistoryEntry>[entry],
         onOpen: (e) => opened = e,
-        thumbnailBuilder: (_, __) => const SizedBox(width: 64, height: 64),
+        thumbnailBuilder: (_, _) => const SizedBox(width: 64, height: 64),
       )),
     ));
     final Finder rowFinder = find.ancestor(
@@ -60,7 +60,7 @@ void main() {
       locale: const Locale('en'),
       home: HistoryComparisonScreen(
         entry: entry,
-        imageBuilder: (_, __, ___) => const ColoredBox(color: Colors.black),
+        imageBuilder: (_, _, _) => const ColoredBox(color: Colors.black),
       ),
     ));
     expect(find.byType(BeforeAfterView), findsOneWidget);

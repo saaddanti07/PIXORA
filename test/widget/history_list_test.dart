@@ -32,7 +32,11 @@ void main() {
         thumbnailBuilder: (_, __) => const SizedBox(width: 64, height: 64),
       )),
     ));
-    final InkWell row = tester.widget<InkWell>(find.byType(InkWell));
+    final Finder rowFinder = find.ancestor(
+      of: find.text('old-photo.png'),
+      matching: find.byType(InkWell),
+    );
+    final InkWell row = tester.widget<InkWell>(rowFinder);
     row.onTap!();
     expect(opened, entry);
   });

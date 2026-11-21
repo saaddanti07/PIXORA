@@ -38,7 +38,7 @@ class HistoryList extends StatelessWidget {
                           height: 64,
                           fit: BoxFit.cover,
                           cacheWidth: 128,
-                          errorBuilder: (_, __, ___) => const SizedBox(
+                          errorBuilder: (context, error, stackTrace) => const SizedBox(
                             width: 64, height: 64,
                             child: Icon(Icons.broken_image_outlined),
                           ),

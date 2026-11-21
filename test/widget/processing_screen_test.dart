@@ -112,7 +112,9 @@ Future<void> settle(WidgetTester tester, {int frames = 16}) async {
   }
   // Lets real file I/O (the images on screen) and any root-zone microtask
   // complete, then paints whatever state that produced.
-  await tester.runAsync(() async {});
+  await tester.runAsync(() async {
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+  });
   await tester.pump();
 }
 
@@ -225,8 +227,10 @@ void main() {
       galleryExportService: gallery,
     )));
     await settle(tester);
+    await tester.ensureVisible(find.text('Save to gallery'));
     await tester.tap(find.text('Save to gallery'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(gallery.calls, 1);
     expect(gallery.lastPath, output.path);
     expect(find.text('Saved to Pictures/PIXORA.'), findsOneWidget);

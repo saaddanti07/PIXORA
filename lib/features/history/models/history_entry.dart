@@ -54,7 +54,9 @@ class HistoryEntry {
     final Object? imagePath = json['imagePath'];
     final Object? processedAt = json['processedAt'];
     if (id is! String || fileName is! String || imagePath is! String ||
-        processedAt is! String) return null;
+        processedAt is! String) {
+      return null;
+    }
     final DateTime? timestamp = DateTime.tryParse(processedAt);
     if (timestamp == null) return null;
     int? optionalInt(String key) => json[key] is int ? json[key] as int : null;

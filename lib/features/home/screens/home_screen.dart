@@ -5,7 +5,6 @@ import 'package:pixora/core/widgets/section_header.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
 import 'package:pixora/features/image_engine/models/processing_policy.dart';
 import 'package:pixora/features/image_engine/services/image_engine_registry.dart';
-import 'package:pixora/features/history/models/history_entry.dart';
 import 'package:pixora/features/home/data/creative_tools.dart';
 import 'package:pixora/features/home/widgets/coming_soon_sheet.dart';
 import 'package:pixora/features/home/widgets/home_header.dart';

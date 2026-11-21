@@ -42,7 +42,11 @@ void main() {
     expect(find.text('saved-photo.png'), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
     await tester.tap(find.text('saved-photo.png'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+    });
+    await tester.pump();
     expect(find.byType(BeforeAfterView), findsOneWidget);
     repository.dispose();
   });

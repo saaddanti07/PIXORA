@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pixora/features/image_engine/services/gallery_export_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const MethodChannel channel = MethodChannel('test/pixora-gallery');
   final TestDefaultBinaryMessenger messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

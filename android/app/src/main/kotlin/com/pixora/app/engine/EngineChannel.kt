@@ -51,6 +51,13 @@ class EngineChannel(
     @Volatile
     private var activeJobId: String? = null
 
+    private data class PendingGallerySave(
+        val sourcePath: String,
+        val displayName: String,
+        val result: MethodChannel.Result,
+    )
+    private var pendingGallerySave: PendingGallerySave? = null
+
     private var restoration: SuperResolutionEngine? = null
     private val classical: ClassicalEnhancer by lazy { ClassicalEnhancer(activity) }
 

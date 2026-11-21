@@ -8,7 +8,14 @@ HistoryEntry _entry(String id, DateTime at) => HistoryEntry(
       id: id,
       fileName: '$id.jpg',
       imagePath: '/local/$id.jpg',
+      originalPath: '/local/${id}_original.jpg',
       processedAt: at,
+      methodId: 'on-device-ai',
+      durationMs: 89700,
+      originalWidth: 640,
+      originalHeight: 480,
+      outputWidth: 2048,
+      outputHeight: 1536,
       toolId: 'pixel_art',
     );
 
@@ -32,9 +39,31 @@ void main() {
     expect(loaded.first.id, 'newer');
     expect(loaded.last.id, 'older');
     expect(loaded.first.fileName, 'newer.jpg');
+    expect(loaded.first.originalPath, '/local/newer_original.jpg');
+    expect(loaded.first.methodId, 'on-device-ai');
+    expect(loaded.first.durationMs, 89700);
+    expect(loaded.first.outputWidth, 2048);
 
     // A restart reads the same ledger from the same store.
     expect(HistoryRepository(store).load().first.id, 'newer');
+  });
+
+
+  test('serializes concurrent additions and notifies only after storage write', () async {
+    final InMemoryKeyValueStore store = InMemoryKeyValueStore();
+    final HistoryRepository repository = HistoryRepository(store);
+    var notifications = 0;
+    repository.addListener(() => notifications++);
+
+    await Future.wait(<Future<void>>[
+      repository.add(_entry('a', DateTime.utc(2026, 1, 1))),
+      repository.add(_entry('b', DateTime.utc(2026, 1, 2))),
+      repository.add(_entry('c', DateTime.utc(2026, 1, 3))),
+    ]);
+
+    expect(repository.load().map((e) => e.id), containsAll(<String>['a', 'b', 'c']));
+    expect(notifications, 3);
+    repository.dispose();
   });
 
   test('clearing removes the ledger', () async {

@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// One processed photo.
-///
-/// Phase 01 only defines and persists the record shape: no processing pipeline
-/// exists yet, so the list stays empty. Phase 02 writes real results here.
+/// Durable metadata for one completed local processing operation.
 @immutable
 class HistoryEntry {
   const HistoryEntry({
@@ -11,49 +8,72 @@ class HistoryEntry {
     required this.fileName,
     required this.imagePath,
     required this.processedAt,
+    this.originalPath,
+    this.methodId,
+    this.durationMs = 0,
+    this.originalWidth,
+    this.originalHeight,
+    this.outputWidth,
+    this.outputHeight,
     this.toolId,
   });
 
   final String id;
   final String fileName;
 
-  /// Local path of the result. PIXORA never stores image bytes in preferences.
+  /// Kept as the historical field name; this is the restored/enhanced image.
   final String imagePath;
+  final String? originalPath;
   final DateTime processedAt;
+  final String? methodId;
+  final int durationMs;
+  final int? originalWidth;
+  final int? originalHeight;
+  final int? outputWidth;
+  final int? outputHeight;
   final String? toolId;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'id': id,
         'fileName': fileName,
         'imagePath': imagePath,
+        'originalPath': originalPath,
         'processedAt': processedAt.toIso8601String(),
+        'methodId': methodId,
+        'durationMs': durationMs,
+        'originalWidth': originalWidth,
+        'originalHeight': originalHeight,
+        'outputWidth': outputWidth,
+        'outputHeight': outputHeight,
         'toolId': toolId,
       };
 
-  /// Returns `null` for malformed records instead of throwing, so one bad
-  /// record can never break the whole history list.
   static HistoryEntry? fromJson(Map<String, dynamic> json) {
     final Object? id = json['id'];
     final Object? fileName = json['fileName'];
     final Object? imagePath = json['imagePath'];
     final Object? processedAt = json['processedAt'];
-    if (id is! String || fileName is! String || imagePath is! String) {
-      return null;
-    }
-    if (processedAt is! String) {
-      return null;
-    }
+    if (id is! String || fileName is! String || imagePath is! String ||
+        processedAt is! String) return null;
     final DateTime? timestamp = DateTime.tryParse(processedAt);
-    if (timestamp == null) {
-      return null;
-    }
-    final Object? toolId = json['toolId'];
+    if (timestamp == null) return null;
+    int? optionalInt(String key) => json[key] is int ? json[key] as int : null;
+    final Object? original = json['originalPath'];
+    final Object? method = json['methodId'];
+    final Object? tool = json['toolId'];
     return HistoryEntry(
       id: id,
       fileName: fileName,
       imagePath: imagePath,
+      originalPath: original is String ? original : null,
       processedAt: timestamp,
-      toolId: toolId is String ? toolId : null,
+      methodId: method is String ? method : null,
+      durationMs: optionalInt('durationMs') ?? 0,
+      originalWidth: optionalInt('originalWidth'),
+      originalHeight: optionalInt('originalHeight'),
+      outputWidth: optionalInt('outputWidth'),
+      outputHeight: optionalInt('outputHeight'),
+      toolId: tool is String ? tool : null,
     );
   }
 

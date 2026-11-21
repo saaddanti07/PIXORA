@@ -43,8 +43,9 @@ class _BeforeAfterViewState extends State<BeforeAfterView> {
   Widget _image(String path, BoxFit fit) => Image.file(
         File(path),
         fit: fit,
+        key: ValueKey<String>(path),
         cacheWidth: widget.cacheWidth,
-        gaplessPlayback: true,
+        gaplessPlayback: false,
         errorBuilder: (BuildContext context, Object error, StackTrace? stack) =>
             const ColoredBox(
           color: Color(0xFF1B1B1F),

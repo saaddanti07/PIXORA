@@ -85,6 +85,10 @@ class ClassicalEnhancementProcessor
         outputPath: outcome.outputPath,
         modelId: ModelRegistry.classicalEnhancement.id,
         duration: outcome.duration,
+        sourceWidth: outcome.sourceWidth,
+        sourceHeight: outcome.sourceHeight,
+        outputWidth: outcome.outputWidth,
+        outputHeight: outcome.outputHeight,
       );
     } on NativeEngineException catch (error) {
       if (error.isCancelled) {
@@ -106,12 +110,18 @@ class ClassicalEnhancementProcessor
 
   Future<String> _allocateOutputPath(String suffix) async {
     final Directory base = await _outputDirectory();
-    final Directory target = Directory('${base.path}${Platform.pathSeparator}enchancements');
+    final Directory target = Directory('${base.path}${Platform.pathSeparator}enhancements');
     if (!await target.exists()) {
       await target.create(recursive: true);
     }
-    final String stamp = _clock().millisecondsSinceEpoch.toString();
-    return '${target.path}${Platform.pathSeparator}pixora_${stamp}_$suffix.jpg';
+    final String stamp = _clock().microsecondsSinceEpoch.toString();
+    String candidate = '${target.path}${Platform.pathSeparator}pixora_${stamp}_$suffix.jpg';
+    var collision = 0;
+    while (await File(candidate).exists()) {
+      collision++;
+      candidate = '${target.path}${Platform.pathSeparator}pixora_${stamp}_${suffix}_$collision.jpg';
+    }
+    return candidate;
   }
 
   static Future<Directory> _defaultOutputDirectory() async {

@@ -119,7 +119,7 @@
   "languageEnglish": "الإنجليزية",
   "languageArabic": "العربية",
   "languageFrench": "الفرنسية",
-  "processingTitle": "استعادة الصورة",
+  "processingTitle": "تحسين الصورة بالذكاء الاصطناعي",
   "processingFastTitle": "تحسين سريع",
   "processingPreparing": "جارٍ تحضير صورتك…",
   "processingTiles": "المربع {completed} من {total}",
@@ -139,7 +139,13 @@
   "processingDuration": "استغرقت {seconds} ثانية",
   "processingClose": "إغلاق",
   "processingTryAgain": "المحاولة مرة أخرى",
-  "processingRestoreAction": "استعادة بالذكاء الاصطناعي",
+  "processingRestoreAction": "تحسين الدقة بالذكاء الاصطناعي",
   "processingEnhanceAction": "تحسين سريع",
-  "processingAiUnavailable": "استعادة الصور بالذكاء الاصطناعي غير متاحة في هذا الإصدار. ما زال التحسين السريع متاحًا."
+  "processingAiUnavailable": "استعادة الصور بالذكاء الاصطناعي غير متاحة في هذا الإصدار. ما زال التحسين السريع متاحًا.",
+  "processingHistorySaveFailed": "تعذر حفظ هذه النتيجة في السجل. لا تزال الصورة متاحة هنا.",
+  "processingGalleryExport": "حفظ في المعرض",
+  "processingGallerySaving": "جارٍ الحفظ في المعرض…",
+  "processingGallerySaved": "تم الحفظ في Pictures/PIXORA.",
+  "processingGalleryFailed": "تعذر الحفظ في المعرض. تحقق من إذن التخزين وحاول مرة أخرى.",
+  "processingAiCapabilityNote": "يقوم Real-ESRGAN بتكبير الصورة وتحسين التفاصيل العامة، لكنه ليس نموذجًا لإزالة الخدوش أو إعادة بناء الأجزاء المفقودة."
 }

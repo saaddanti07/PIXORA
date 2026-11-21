@@ -1,16 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!--
-        PIXORA Phase 01 intentionally declares NO permissions.
-
-        Photos are chosen through the Android system photo picker (which grants
-        one-off, read-only access to the single image the user picks), and every
-        pixel stays on the device. There is no network permission, so the app
-        cannot upload user content anywhere.
+        Photos are chosen through the Android system photo picker. The legacy
+        WRITE_EXTERNAL_STORAGE permission is capped at Android 9 and requested
+        only if the user explicitly exports to the gallery. Android 10+ uses
+        scoped MediaStore access. No network permission is declared.
     -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <application
         android:label="PIXORA"
         android:name="${applicationName}"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"

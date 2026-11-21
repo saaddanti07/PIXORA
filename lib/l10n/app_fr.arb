@@ -119,7 +119,7 @@
   "languageEnglish": "Anglais",
   "languageArabic": "Arabe",
   "languageFrench": "Français",
-  "processingTitle": "Restaurer la photo",
+  "processingTitle": "Amélioration photo par IA",
   "processingFastTitle": "Amélioration rapide",
   "processingPreparing": "Préparation de votre photo…",
   "processingTiles": "Tuile {completed} sur {total}",
@@ -139,7 +139,13 @@
   "processingDuration": "Durée : {seconds} s",
   "processingClose": "Fermer",
   "processingTryAgain": "Réessayer",
-  "processingRestoreAction": "Restaurer par IA",
+  "processingRestoreAction": "Agrandir avec l’IA",
   "processingEnhanceAction": "Amélioration rapide",
-  "processingAiUnavailable": "La restauration par IA n'est pas disponible dans cette version. L'amélioration rapide fonctionne toujours."
+  "processingAiUnavailable": "La restauration par IA n'est pas disponible dans cette version. L'amélioration rapide fonctionne toujours.",
+  "processingHistorySaveFailed": "Impossible d'enregistrer ce résultat dans l'historique. L'image reste disponible ici.",
+  "processingGalleryExport": "Enregistrer dans la galerie",
+  "processingGallerySaving": "Enregistrement dans la galerie…",
+  "processingGallerySaved": "Enregistré dans Pictures/PIXORA.",
+  "processingGalleryFailed": "Impossible d'enregistrer dans la galerie. Vérifiez l'autorisation de stockage et réessayez.",
+  "processingAiCapabilityNote": "Real-ESRGAN agrandit l’image et améliore les détails généraux. Ce modèle ne supprime pas les rayures et ne reconstruit pas les zones manquantes."
 }

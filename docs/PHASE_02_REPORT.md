@@ -1,13 +1,23 @@
 # PIXORA — Phase 02 Report: on-device AI restoration
 
-**Version:** 0.2.0 · **Status:** implemented, CI-green, **not yet verified on a physical Redmi 9**
-**Date:** 2026-11-20 · **Branch:** `arena/f490bcd4-pixora`
+**Version:** 0.2.1 · **Status:** device-reported quality/history issues under corrective work; **not acceptance-complete**
+**Date:** 2026-11-19 · **Branch:** `arena/f490bcd4-pixora`
 
 This report records what Phase 02 actually ships, with the numbers the build
 produced. Anything that was not measured is labelled as such — the device
 benchmark is the one gate still open, because no Redmi 9 was available here.
 
 ---
+
+## Device follow-up status
+
+The previous 0.2.0 APK was tested by the user on a Redmi 9. The reported output
+retained scratches, and the UI claimed a history save while the History tab was
+empty. These are critical findings, not cosmetic issues. Follow-up root-cause
+analysis, code changes, outstanding image-pair measurements, model assessment,
+and device retest requirements are documented in
+[`PHASE_02_DEVICE_FINDINGS.md`](PHASE_02_DEVICE_FINDINGS.md). The 89.7-second
+figure is one user-reported run only; the two-run/no-ANR/no-OOM gate remains open.
 
 ## 1. What ships
 
@@ -20,7 +30,7 @@ benchmark is the one gate still open, because no Redmi 9 was available here.
 | 6 | Benchmarks | ⚠️ CI-runner measurement done; **device measurement pending** |
 | 7 | Restoration UI with original/result comparison | ✅ implemented |
 | 8 | Classical "Fast enhancement" path | ✅ implemented |
-| 9 | Tests, CI validation, documentation | ✅ 104 tests, CI green |
+| 9 | Tests, CI validation, documentation | ⚠️ follow-up tests added; this revision awaits CI and device retest |
 
 No face restoration, colourisation, anime, ads, subscriptions, downloads or
 network calls were added. Phase 03 has not been started.
@@ -130,11 +140,11 @@ the working size when a reduction happened. Anything outside the budget goes to
 | Modelled cost per megapixel | 61 tiles | arithmetic |
 | Flutter tests | **104 passing**, 0 failing | CI |
 | `flutter analyze` | **No issues found!** | CI |
-| Debug APK | **171,772,517 bytes (163.8 MiB)** | CI artifact |
+| Debug APK | Prior 0.2.0: 171,772,517 bytes (163.8 MiB); follow-up APK size pending CI | CI artifact |
 | Model inside the APK | `assets/models/realesr_general_x4v3_fp32.tflite` — 4,910,280 B | CI asserts it |
 | LiteRT native library | 3.55 MB (arm64) · 2.37 MB (armeabi-v7a) | APK listing |
 
-**What is *not* measured:** per-tile latency on a Redmi 9. The CI runner is an
+**What is *not* measured:** pixel-difference/quality metrics for the user's photo pair (not present in this workspace), or the second device run. The CI runner is an
 x86_64 server CPU with a different memory subsystem; its numbers bound nothing
 about the phone. See §6.
 
@@ -142,7 +152,7 @@ about the phone. See §6.
 
 ## 5. The test suite
 
-104 tests, 18 files. Phase 01's 72 tests are untouched and still pass; 32 are new:
+The previous suite had 104 passing tests. Follow-up adds history/persistence/UI, gallery-channel, and native tiling tests; this revision's exact test count/result is pending CI. Phase 01 tests remain present:
 
 | File | What it pins down |
 | --- | --- |
@@ -165,7 +175,7 @@ The arithmetic that motivates the default policy (24 tiles × 1.3–2.8 s estima
 per tile on a Helio G35 = **31–67 s**) is a prediction, not a measurement. It is
 written down so the device run can confirm or refute it.
 
-`docs/PHASE_02_BENCHMARKS.md` contains the exact procedure, the fixtures to use
+`docs/PHASE_02_BENCHMARKS.md` contains the exact procedure; `docs/PHASE_02_DEVICE_FINDINGS.md` contains the user-reported findings, model review, and photo-pair audit command. The fixture table to use
 and the table to fill in. Until it is filled in, **no speed claim about the Redmi 9
 may be made in the app, the store listing or the README.**
 
@@ -173,12 +183,10 @@ may be made in the app, the store listing or the README.**
 
 ## 6.1 Known limitations (honest list)
 
-1. **No device benchmark yet** (above). The 90-second gate is open.
-2. **Seam quality is not verified on real photographs.** The design avoids the
+1. **Device gate not closed.** User reports one Redmi 9 run at 89.7 s; the second consecutive run and memory/ANR observations are still unverified.
+2. **Seam quality is not verified on real photographs.** The tiler now partitions overlapping predictions without double-writing; the design avoids the
    most common causes, but only eyes on real output can confirm it.
-3. **No "save to gallery".** Results are written to the app's private files
-   directory and recorded in History; exporting to the Android gallery
-   (MediaStore) is not implemented yet.
+3. **Gallery export is implemented in the follow-up, but must still be physically verified** on Android versions covering scoped storage and legacy permission behavior.
 4. **Debug APK is 163.8 MiB.** Debug builds bundle three ABIs plus debug Flutter
    engines; the LiteRT JNI libraries add ~10.6 MB and the model 4.7 MiB. A release
    build with per-ABI splits is the Phase 03 task.
@@ -200,7 +208,7 @@ may be made in the app, the store listing or the README.**
 | Claim | How it is verified |
 | --- | --- |
 | The model is inside the APK | CI asserts `assets/models/*.tflite` is present and its SHA-256 matches the report |
-| No upload is possible | `android/app/src/main/AndroidManifest.xml` declares **zero** permissions; `INTERNET` exists only in the debug and profile manifests, which are not part of a release build |
+| No upload is possible | ``android/app/src/main/AndroidManifest.xml` declares no `INTERNET` permission; the follow-up adds only `WRITE_EXTERNAL_STORAGE` capped at API 28 for explicit legacy gallery export |
 | No network code exists | dependencies are `intl`, `image_picker`, `shared_preferences` — no HTTP client, no analytics |
 | The photo never leaves the device | the engine reads a local path and writes a local path; the channel has no other data source |
 | No fake AI | the restoration tool only renders when the bundled model is present; the classical path is labelled "Fast enhancement / Classical enhancement" |

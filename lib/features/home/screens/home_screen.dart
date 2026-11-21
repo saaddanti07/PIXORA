@@ -53,7 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
       widget.selectionController ??
           ImageSelectionController(picker: DeviceImagePickerService());
 
-  late final List<HistoryEntry> _entries = widget.historyRepository.load();
   bool _isPicking = false;
 
   Future<void> _choosePhoto() async {
@@ -146,9 +145,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          RecentActivityCard(
-            entries: _entries,
-            onViewAll: widget.onOpenHistory,
+          ListenableBuilder(
+            listenable: widget.historyRepository,
+            builder: (BuildContext context, Widget? child) => RecentActivityCard(
+              entries: widget.historyRepository.load(),
+              onViewAll: widget.onOpenHistory,
+            ),
           ),
         ],
       ),

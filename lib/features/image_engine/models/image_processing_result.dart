@@ -12,6 +12,10 @@ class ImageProcessingResult {
     this.modelId,
     this.duration = Duration.zero,
     this.failureReason,
+    this.sourceWidth,
+    this.sourceHeight,
+    this.outputWidth,
+    this.outputHeight,
   });
 
   factory ImageProcessingResult.failed(String reason) => ImageProcessingResult(
@@ -24,7 +28,11 @@ class ImageProcessingResult {
         outputPath = null,
         modelId = null,
         duration = Duration.zero,
-        failureReason = null;
+        failureReason = null,
+        sourceWidth = null,
+        sourceHeight = null,
+        outputWidth = null,
+        outputHeight = null;
 
   final ImageProcessingStatus status;
 
@@ -35,6 +43,10 @@ class ImageProcessingResult {
   final String? modelId;
   final Duration duration;
   final String? failureReason;
+  final int? sourceWidth;
+  final int? sourceHeight;
+  final int? outputWidth;
+  final int? outputHeight;
 
   bool get isSuccess => status == ImageProcessingStatus.succeeded;
 }

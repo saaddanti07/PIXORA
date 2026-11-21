@@ -92,6 +92,7 @@ jobs:
             f"| backend | {report['conversion']['backend']} |",
             f"| min correlation | **{fidelity['minCorrelation']:.6f}** |",
             f"| max abs error | {fidelity['maxAbsError'] * 255:.2f}/255 |",
+            f"| model vs bicubic MAE | {fidelity.get('meanAbsChangeVsBicubic', {})} |",
             f"| gate | {'PASS' if fidelity['passed'] else 'FAIL'} |",
             f"| runner latency | {report['timing']['perTileMs']} ms/tile ({report['timing']['hostCpus']} cpus, not a phone) |",
             "",
@@ -262,7 +263,7 @@ jobs:
         run: |
           set +e
           flutter build apk --debug \
-            --build-name "0.2.0" \
+            --build-name "0.2.1" \
             --build-number "${{ github.run_number }}" \
             --dart-define "PIXORA_BUILD=${{ github.run_number }}" 2>&1 | tee build.log
           echo "BUILD_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
@@ -292,6 +293,15 @@ jobs:
       - name: Stop when the build failed
         if: env.BUILD_EXIT != '0'
         run: exit 1
+
+      - name: Run native tiling tests
+        working-directory: android
+        run: |
+          if [ -x ./gradlew ]; then
+            ./gradlew :app:testDebugUnitTest --no-daemon
+          else
+            gradle :app:testDebugUnitTest --no-daemon
+          fi
 
       - name: Confirm the model ships inside the APK
         run: |

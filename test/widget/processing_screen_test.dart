@@ -15,6 +15,8 @@ import 'package:pixora/features/image_engine/models/image_processing_request.dar
 import 'package:pixora/features/image_engine/models/image_processing_result.dart';
 import 'package:pixora/features/image_engine/models/model_spec.dart';
 import 'package:pixora/features/image_engine/models/processing_tool.dart';
+import 'package:pixora/core/storage/key_value_store.dart';
+import 'package:pixora/features/image_engine/services/gallery_export_service.dart';
 import 'package:pixora/features/image_engine/services/native_engine_channel.dart';
 import 'package:pixora/features/image_picker/models/picked_image.dart';
 import 'package:pixora/features/processing/screens/processing_screen.dart';
@@ -193,7 +195,64 @@ void main() {
     final List<HistoryEntry> entries = history.load();
     expect(entries, hasLength(1));
     expect(entries.single.imagePath, output.path);
+    expect(entries.single.originalPath, isNotNull);
+    expect(File(entries.single.originalPath!).existsSync(), isTrue);
+    expect(entries.single.methodId, 'on-device-ai');
+    expect(entries.single.durationMs, 42000);
+    expect(entries.single.originalWidth, 800);
     expect(entries.single.toolId, ProcessingToolId.oldPhotoRestoration.name);
+  });
+
+  testWidgets('gallery export confirms only after MediaStore returns a URI', (
+    WidgetTester tester,
+  ) async {
+    final File output = File('${temp.path}/export-result.jpg')..writeAsBytesSync(tinyPng);
+    final FakeGalleryExportService gallery = FakeGalleryExportService();
+    final FakeRestorationProcessor processor = FakeRestorationProcessor(
+      result: ImageProcessingResult(
+        status: ImageProcessingStatus.succeeded,
+        outputPath: output.path,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(wrap(ProcessingScreen(
+      source: picked(), tool: ProcessingToolId.oldPhotoRestoration,
+      processor: processor, historyRepository: history,
+      galleryExportService: gallery,
+    )));
+    await settle(tester);
+    await tester.tap(find.text('Save to gallery'));
+    await tester.pumpAndSettle();
+    expect(gallery.calls, 1);
+    expect(gallery.lastPath, output.path);
+    expect(find.text('Saved to Pictures/PIXORA.'), findsOneWidget);
+  });
+
+  testWidgets('a storage write failure is never presented as saved history', (
+    WidgetTester tester,
+  ) async {
+    final File output = File('${temp.path}/unrecorded.jpg')..writeAsBytesSync(tinyPng);
+    final HistoryRepository failing = HistoryRepository(_FailingKeyValueStore());
+    final FakeRestorationProcessor processor = FakeRestorationProcessor(
+      result: ImageProcessingResult(
+        status: ImageProcessingStatus.succeeded,
+        outputPath: output.path,
+      ),
+      emitProgress: false,
+    );
+    await tester.pumpWidget(wrap(ProcessingScreen(
+      source: picked(), tool: ProcessingToolId.oldPhotoRestoration,
+      processor: processor, historyRepository: failing,
+    )));
+    await settle(tester);
+    expect(find.text('Saved to your History'), findsNothing);
+    expect(find.text('Could not save this result to History. The image is still available here.'), findsOneWidget);
+    expect(failing.load(), isEmpty);
+    failing.dispose();
   });
 
   testWidgets('the progress line reports tiles from the engine', (
@@ -292,6 +351,7 @@ void main() {
     expect(find.text('Could not process this photo'), findsOneWidget,
         reason: 'visible: ${visibleText(tester)}');
     expect(find.text('out of memory'), findsOneWidget);
+    expect(history.load(), isEmpty);
 
     await tester.tap(find.text('Try again'));
     await settle(tester);
@@ -331,4 +391,25 @@ class _HangingProcessor implements ImageRestorationService, ProgressAwareProcess
   @override
   Future<ImageProcessingResult> restore(ImageProcessingRequest request) =>
       _pending.future;
+}
+
+class FakeGalleryExportService implements GalleryExportService {
+  int calls = 0;
+  String? lastPath;
+
+  @override
+  Future<Uri> saveRestoredImage({required String path, required String displayName}) async {
+    calls++;
+    lastPath = path;
+    return Uri.parse('content://media/external/images/media/123');
+  }
+}
+
+class _FailingKeyValueStore implements KeyValueStore {
+  @override
+  String? read(String key) => null;
+  @override
+  Future<void> write(String key, String value) async => throw StateError('disk full');
+  @override
+  Future<void> remove(String key) async => throw StateError('disk full');
 }

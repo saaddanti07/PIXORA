@@ -1,6 +1,13 @@
 package com.pixora.app.engine
 
+import android.Manifest
 import android.app.Activity
+import android.content.ContentValues
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -8,6 +15,8 @@ import android.view.WindowManager
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
+import java.io.FileInputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -62,6 +71,7 @@ class EngineChannel(
             "restore" -> startRestoration(call, result)
             "enhance" -> startEnhancement(call, result)
             "cancel" -> cancel(call, result)
+            "saveToGallery" -> saveToGallery(call, result)
             "paths" -> result.success(
                 mapOf(
                     "filesDir" to activity.filesDir.absolutePath,
@@ -206,6 +216,103 @@ class EngineChannel(
         }
     }
 
+    /** Android 10+ uses scoped MediaStore writes; Android 9 and below request
+     * the narrowly capped legacy write permission only when the user exports. */
+    private fun saveToGallery(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("sourcePath")
+        val name = call.argument<String>("displayName")
+        if (path.isNullOrBlank() || name.isNullOrBlank() || !File(path).isFile) {
+            result.error("bad_request", "A valid output file and name are required.", null)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED) {
+            if (pendingGallerySave != null) {
+                result.error("busy", "A gallery permission request is already active.", null)
+                return
+            }
+            pendingGallerySave = PendingGallerySave(path, name, result)
+            activity.requestPermissions(
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                GALLERY_PERMISSION_REQUEST,
+            )
+            return
+        }
+        writeGalleryEntry(path, name, result)
+    }
+
+    fun onRequestPermissionsResult(requestCode: Int, grantResults: IntArray): Boolean {
+        if (requestCode != GALLERY_PERMISSION_REQUEST) return false
+        val pending = pendingGallerySave
+        pendingGallerySave = null
+        if (pending == null) return true
+        if (grantResults.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
+            pending.result.error("permission_denied", "Storage permission was denied.", null)
+        } else {
+            writeGalleryEntry(pending.sourcePath, pending.displayName, pending.result)
+        }
+        return true
+    }
+
+    private fun writeGalleryEntry(path: String, displayName: String, result: MethodChannel.Result) {
+        executor.execute {
+            var uri: Uri? = null
+            try {
+                val resolver = activity.contentResolver
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
+                        put(MediaStore.Images.Media.RELATIVE_PATH,
+                            "${Environment.DIRECTORY_PICTURES}/PIXORA")
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    } else {
+                        val legacyDirectory = File(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                            "PIXORA",
+                        )
+                        check(legacyDirectory.exists() || legacyDirectory.mkdirs()) {
+                            "Could not create Pictures/PIXORA"
+                        }
+                        val baseName = displayName.substringBeforeLast('.', displayName)
+                        var destination = File(legacyDirectory, displayName)
+                        var suffix = 1
+                        while (destination.exists()) {
+                            destination = File(legacyDirectory, "${baseName}_$suffix.jpg")
+                            suffix++
+                        }
+                        put(MediaStore.Images.Media.DATA, destination.absolutePath)
+                        put(MediaStore.Images.Media.TITLE, destination.nameWithoutExtension)
+                    }
+                }
+                uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                    ?: throw IllegalStateException("MediaStore refused the image entry")
+                FileInputStream(File(path)).use { input ->
+                    resolver.openOutputStream(uri!!, "w")?.use { output ->
+                        input.copyTo(output)
+                        output.flush()
+                    } ?: throw IllegalStateException("Could not open the gallery output stream")
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val published = ContentValues().apply {
+                        put(MediaStore.Images.Media.IS_PENDING, 0)
+                    }
+                    check(resolver.update(uri!!, published, null, null) == 1) {
+                        "Could not publish the image to the gallery"
+                    }
+                }
+                mainHandler.post { result.success(uri.toString()) }
+            } catch (error: Throwable) {
+                uri?.let { try { activity.contentResolver.delete(it, null, null) } catch (_: Exception) {} }
+                Log.e(TAG, "gallery export failed", error)
+                mainHandler.post {
+                    result.error("export_failed", error.message ?: "Gallery export failed.", null)
+                }
+            }
+        }
+    }
+
     private fun setKeepScreenOn(call: MethodCall, result: MethodChannel.Result) {
         val enabled = call.argument<Boolean>("enabled") ?: false
         activity.runOnUiThread {
@@ -286,5 +393,6 @@ class EngineChannel(
     private companion object {
         const val TAG = "PixoraEngineChannel"
         const val CHANNEL_NAME = "pixora/engine"
+        const val GALLERY_PERMISSION_REQUEST = 4147
     }
 }

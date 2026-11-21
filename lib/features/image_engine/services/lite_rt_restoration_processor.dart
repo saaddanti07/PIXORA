@@ -103,6 +103,10 @@ class LiteRtRestorationProcessor
         outputPath: outcome.outputPath,
         modelId: _capabilities.modelId,
         duration: outcome.duration,
+        sourceWidth: outcome.sourceWidth,
+        sourceHeight: outcome.sourceHeight,
+        outputWidth: outcome.outputWidth,
+        outputHeight: outcome.outputHeight,
       );
     } on NativeEngineException catch (error) {
       if (error.isCancelled) {
@@ -136,8 +140,14 @@ class LiteRtRestorationProcessor
     if (!await target.exists()) {
       await target.create(recursive: true);
     }
-    final String stamp = _clock().millisecondsSinceEpoch.toString();
-    return '${target.path}${Platform.pathSeparator}pixora_${stamp}_$suffix.jpg';
+    final String stamp = _clock().microsecondsSinceEpoch.toString();
+    String candidate = '${target.path}${Platform.pathSeparator}pixora_${stamp}_$suffix.jpg';
+    var collision = 0;
+    while (await File(candidate).exists()) {
+      collision++;
+      candidate = '${target.path}${Platform.pathSeparator}pixora_${stamp}_${suffix}_$collision.jpg';
+    }
+    return candidate;
   }
 
   /// Application documents directory on Android; a temp directory elsewhere.

@@ -50,6 +50,8 @@ dependencies {
 
     // EXIF orientation, so a portrait photo is not restored lying on its side.
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 flutter {

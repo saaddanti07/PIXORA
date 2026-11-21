@@ -415,14 +415,14 @@ rendered deterministically, so every density stays pixel-crisp and perfectly cen
 | --- | --- |
 | 01 ✅ | Foundation, branding, UI, navigation, localization/RTL, themes, preferences, picker/preview, history shell, engine architecture, CI, tests, docs |
 | 01.1 ✅ | Runtime bug fix for real-device reports: picker lost-data recovery, preview freshness, state restoration, locale pinning, build stamp |
-| 02 ✅ | **On-device AI restoration** (Real-ESRGAN via LiteRT), tiled native engine, real progress/cancel, before/after comparison, classical Fast enhancement, history capture — see [`docs/PHASE_02_REPORT.md`](docs/PHASE_02_REPORT.md) |
+| 02 ⚠️ | On-device Real-ESRGAN super-resolution/enhancement is implemented; Redmi 9 reports triggered history/output-quality follow-up. Device acceptance remains open — see [`docs/PHASE_02_DEVICE_FINDINGS.md`](docs/PHASE_02_DEVICE_FINDINGS.md) |
 | 03 | LiteRT integration, model storage/download manager, Smart AI Engine profiling |
 | 04 | Restoration, face restoration, colourisation, artistic styles, pixel art |
 | 05 | AdMob, release signing, Play Store release |
 
-> Phase 02 shipped the AI restoration engine earlier than the original plan and without a
-> model download manager: the model is bundled, so the app still requests no `INTERNET`
-> permission and cannot upload a photo. Face restoration stays deferred (see the audit in
+> Phase 02 implemented a bundled on-device AI super-resolution engine without a
+> model download manager. Device testing has surfaced quality/history issues now under
+> follow-up; this phase is not acceptance-complete. There is no `INTERNET` permission. Face restoration stays deferred (see the audit in
 > [`docs/PHASE_02_STEP1_MODEL_AUDIT.md`](docs/PHASE_02_STEP1_MODEL_AUDIT.md)).
 >
 > **Not yet verified:** the Redmi 9 performance gate — no physical device has run it.

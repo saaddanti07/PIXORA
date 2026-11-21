@@ -73,6 +73,22 @@ class LiteRtRunner private constructor(
 
             val inputShape = interpreter.getInputTensor(0).shape()
             val outputShape = interpreter.getOutputTensor(0).shape()
+            val expectedInput = if (meta.inputLayout == "NCHW")
+                intArrayOf(1, 3, meta.inputHeight, meta.inputWidth)
+            else intArrayOf(1, meta.inputHeight, meta.inputWidth, 3)
+            val expectedOutput = if (meta.outputLayout == "NCHW")
+                intArrayOf(1, 3, meta.outputHeight, meta.outputWidth)
+            else intArrayOf(1, meta.outputHeight, meta.outputWidth, 3)
+            check(inputShape.contentEquals(expectedInput)) {
+                "model input tensor ${inputShape.contentToString()} != metadata ${expectedInput.contentToString()}"
+            }
+            check(outputShape.contentEquals(expectedOutput)) {
+                "model output tensor ${outputShape.contentToString()} != metadata ${expectedOutput.contentToString()}"
+            }
+            check(interpreter.getInputTensor(0).dataType() == org.tensorflow.lite.DataType.FLOAT32 &&
+                interpreter.getOutputTensor(0).dataType() == org.tensorflow.lite.DataType.FLOAT32) {
+                "only float32 model tensors are supported"
+            }
             Log.i(TAG, "model loaded: input=${inputShape.joinToString("x")} " +
                 "output=${outputShape.joinToString("x")} threads=$threads")
             return LiteRtRunner(interpreter, meta)

@@ -119,7 +119,7 @@
   "languageEnglish": "English",
   "languageArabic": "Arabic",
   "languageFrench": "French",
-  "processingTitle": "Restore photo",
+  "processingTitle": "AI photo enhancement",
   "processingFastTitle": "Fast enhancement",
   "processingPreparing": "Preparing your photo…",
   "processingTiles": "Tile {completed} of {total}",
@@ -163,7 +163,13 @@
   },
   "processingClose": "Close",
   "processingTryAgain": "Try again",
-  "processingRestoreAction": "Restore with AI",
+  "processingRestoreAction": "AI upscaling",
   "processingEnhanceAction": "Fast enhancement",
-  "processingAiUnavailable": "AI restoration is not available in this build. Fast enhancement still works."
+  "processingAiUnavailable": "AI restoration is not available in this build. Fast enhancement still works.",
+  "processingHistorySaveFailed": "Could not save this result to History. The image is still available here.",
+  "processingGalleryExport": "Save to gallery",
+  "processingGallerySaving": "Saving to gallery…",
+  "processingGallerySaved": "Saved to Pictures/PIXORA.",
+  "processingGalleryFailed": "Could not save to the gallery. Check storage permission and try again.",
+  "processingAiCapabilityNote": "Real-ESRGAN enlarges and enhances general detail. It is not a scratch-removal or image-reconstruction model."
 }

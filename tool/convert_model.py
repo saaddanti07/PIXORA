@@ -15,7 +15,8 @@ refuses to emit a model unless all of them pass:
    deterministic, procedurally generated fixtures -- **no photograph, and in
    particular no user photograph, is ever used**;
 5. compares the two outputs and fails if the Pearson correlation is below
-   ``--min-corr`` (default 0.995, the threshold approved for Phase 02).
+   ``--min-corr`` (default 0.995, the threshold approved for Phase 02); it also
+   verifies that detail/noise model outputs are not merely bicubic upscales.
 
 Outputs:
 
@@ -451,17 +452,36 @@ def main() -> int:
         fail(f"unexpected tflite input shape {input_info['shape']}")
 
     results = {}
+    nontrivial_output_changes = {}
     overall_corr = 1.0
     overall_max = 0.0
     for name, image in fixtures:
         candidate = run_tflite(interpreter, image, input_layout)
         metrics = compare(references[name], candidate)
+        # Guard against accidentally shipping an identity/bicubic placeholder.
+        # The comparison deliberately uses the same output dimensions.
+        input_nchw = torch.from_numpy(np.transpose(image[None], (0, 3, 1, 2)).copy())
+        bicubic = torch.nn.functional.interpolate(
+            input_nchw, scale_factor=SCALE, mode="bicubic", align_corners=False,
+        ).numpy()
+        bicubic_hwc = normalise_output(bicubic)
+        change = compare(bicubic_hwc, candidate)["mean_abs_error"]
+        metrics["mean_abs_change_vs_bicubic"] = change
+        if name in {"checker", "noise0", "detail"}:
+            nontrivial_output_changes[name] = change
         results[name] = metrics
         overall_corr = min(overall_corr, metrics["correlation"])
         overall_max = max(overall_max, metrics["max_abs_error"])
         print(f"  {name:<12} corr={metrics['correlation']:.6f} "
               f"max|err|={metrics['max_abs_error'] * 255:.2f}/255 "
               f"psnr={metrics['psnr_db']:.2f} dB")
+
+    if len(nontrivial_output_changes) != 3 or any(
+        value < 0.001 for value in nontrivial_output_changes.values()
+    ):
+        fail(f"model output too close to plain bicubic on detail fixtures: {nontrivial_output_changes}")
+    print("model-vs-bicubic MAE (detail fixtures): " +
+          ", ".join(f"{name}={value:.6f}" for name, value in nontrivial_output_changes.items()))
 
     # latency on *this* machine -- explicitly not the target device
     timing_image = fixtures[0][1]
@@ -516,7 +536,12 @@ def main() -> int:
             "maxAbsError": overall_max,
             "thresholdCorrelation": args.min_corr,
             "thresholdMaxAbsError": args.max_abs_error,
-            "passed": bool(overall_corr >= args.min_corr and overall_max <= args.max_abs_error),
+            "meanAbsChangeVsBicubic": nontrivial_output_changes,
+            "nontrivialOutputPassed": len(nontrivial_output_changes) == 3 and
+                all(value >= 0.001 for value in nontrivial_output_changes.values()),
+            "passed": bool(overall_corr >= args.min_corr and overall_max <= args.max_abs_error
+                           and len(nontrivial_output_changes) == 3
+                           and all(value >= 0.001 for value in nontrivial_output_changes.values())),
         },
         "timing": {
             "perTileMs": round(per_tile_ms, 1),

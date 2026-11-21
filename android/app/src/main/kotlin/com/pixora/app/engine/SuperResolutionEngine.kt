@@ -10,7 +10,6 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /** One restoration job, in the units the engine actually enforces. */
@@ -101,7 +100,7 @@ class SuperResolutionEngine(
         try {
             val orientation = orientationOf(request.sourcePath)
             val (rawWidth, rawHeight) = boundsOf(request.sourcePath)
-            val swap = orientation == 90 || orientation == 270
+            val swap = orientation in 5..8
             val sourceWidth = if (swap) rawHeight else rawWidth
             val sourceHeight = if (swap) rawWidth else rawHeight
 
@@ -119,7 +118,7 @@ class SuperResolutionEngine(
                 workingWidth = workingWidth,
                 workingHeight = workingHeight,
                 swapAxes = swap,
-                rotationDegrees = orientation,
+                orientation = orientation,
             )
 
             val sourcePixels = IntArray(working.width * working.height)
@@ -151,19 +150,18 @@ class SuperResolutionEngine(
                     window = window,
                     tile = model.inputWidth,
                     layout = model.inputLayout,
+                    valueRange = model.valueRange,
                     target = engine.input,
                 )
                 engine.runTile()
                 composeTile(
                     tileOutput = engine.output,
                     layout = model.outputLayout,
+                    valueRange = model.valueRange,
                     modelSize = model.inputWidth * model.scale,
                     scale = model.scale,
                     halo = request.halo,
                     window = window,
-                    sourceWidth = working.width,
-                    sourceHeight = working.height,
-                    plan = plan,
                     target = pixelsOut,
                     bitmap = outBitmap,
                 )
@@ -233,21 +231,15 @@ class SuperResolutionEngine(
         return options.outWidth to options.outHeight
     }
 
+    /** EXIF orientation tag (1..8), preserved so mirrored variants are handled too. */
     private fun orientationOf(path: String): Int = try {
-        when (
-            ExifInterface(path).getAttributeInt(
-                ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_NORMAL,
-            )
-        ) {
-            ExifInterface.ORIENTATION_ROTATE_90, ExifInterface.ORIENTATION_TRANSPOSE -> 90
-            ExifInterface.ORIENTATION_ROTATE_180, ExifInterface.ORIENTATION_FLIP_VERTICAL -> 180
-            ExifInterface.ORIENTATION_ROTATE_270, ExifInterface.ORIENTATION_TRANSVERSE -> 270
-            else -> 0
-        }
+        ExifInterface(path).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_NORMAL,
+        ).coerceIn(1, 8)
     } catch (error: Exception) {
         Log.w(TAG, "EXIF unreadable, assuming upright", error)
-        0
+        ExifInterface.ORIENTATION_NORMAL
     }
 
     /**
@@ -279,7 +271,7 @@ class SuperResolutionEngine(
         workingWidth: Int,
         workingHeight: Int,
         swapAxes: Boolean,
-        rotationDegrees: Int,
+        orientation: Int,
     ): Bitmap {
         val rawTargetWidth = if (swapAxes) workingHeight else workingWidth
         val rawTargetHeight = if (swapAxes) workingWidth else workingHeight
@@ -308,11 +300,23 @@ class SuperResolutionEngine(
             if (scaled !== bitmap) bitmap.recycle()
             bitmap = scaled
         }
-        if (rotationDegrees != 0) {
-            val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
-            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-            if (rotated !== bitmap) bitmap.recycle()
-            bitmap = rotated
+        if (orientation != ExifInterface.ORIENTATION_NORMAL) {
+            val w = bitmap.width.toFloat()
+            val h = bitmap.height.toFloat()
+            val values = when (orientation) {
+                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> floatArrayOf(-1f, 0f, w, 0f, 1f, 0f, 0f, 0f, 1f)
+                ExifInterface.ORIENTATION_ROTATE_180 -> floatArrayOf(-1f, 0f, w, 0f, -1f, h, 0f, 0f, 1f)
+                ExifInterface.ORIENTATION_FLIP_VERTICAL -> floatArrayOf(1f, 0f, 0f, 0f, -1f, h, 0f, 0f, 1f)
+                ExifInterface.ORIENTATION_TRANSPOSE -> floatArrayOf(0f, 1f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+                ExifInterface.ORIENTATION_ROTATE_90 -> floatArrayOf(0f, -1f, h, 1f, 0f, 0f, 0f, 0f, 1f)
+                ExifInterface.ORIENTATION_TRANSVERSE -> floatArrayOf(0f, -1f, h, -1f, 0f, w, 0f, 0f, 1f)
+                ExifInterface.ORIENTATION_ROTATE_270 -> floatArrayOf(0f, 1f, 0f, -1f, 0f, w, 0f, 0f, 1f)
+                else -> floatArrayOf(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f)
+            }
+            val matrix = Matrix().apply { setValues(values) }
+            val oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            if (oriented !== bitmap) bitmap.recycle()
+            bitmap = oriented
         }
         return bitmap
     }
@@ -350,81 +354,57 @@ class SuperResolutionEngine(
         window: TileWindow,
         tile: Int,
         layout: String,
+        valueRange: ClosedFloatingPointRange<Float>,
         target: FloatArray,
-    ) {
-        val plane = tile * tile
-        if (layout == "NCHW") {
-            for (channel in 0..2) {
-                val shift = if (channel == 0) 16 else if (channel == 1) 8 else 0
-                var out = channel * plane
-                for (ty in 0 until tile) {
-                    val rowBase = (window.y + ty) * paddedWidth + window.x
-                    for (tx in 0 until tile) {
-                        target[out++] = ((padded[rowBase + tx] shr shift) and 0xFF) / 255f
-                    }
-                }
-            }
-        } else {
-            var out = 0
-            for (ty in 0 until tile) {
-                val rowBase = (window.y + ty) * paddedWidth + window.x
-                for (tx in 0 until tile) {
-                    val pixel = padded[rowBase + tx]
-                    target[out++] = ((pixel shr 16) and 0xFF) / 255f
-                    target[out++] = ((pixel shr 8) and 0xFF) / 255f
-                    target[out++] = (pixel and 0xFF) / 255f
-                }
-            }
-        }
-    }
+    ) = RgbTensorCodec.writeTile(
+        pixels = padded,
+        bitmapWidth = paddedWidth,
+        startX = window.x,
+        startY = window.y,
+        size = tile,
+        layout = layout,
+        valueRange = valueRange,
+        target = target,
+    )
 
     /**
-     * Writes exactly the tile's own region (never its halo), so neighbouring
-     * tiles never overwrite each other and no blending artefact can appear.
+     * Writes exactly the non-overlapping partition assigned by TilePlan.
+     * Overlap predictions are divided at their midpoint; no pixel is omitted
+     * or overwritten, and each selected sample retains the model halo context.
      */
     private fun composeTile(
         tileOutput: FloatArray,
         layout: String,
+        valueRange: ClosedFloatingPointRange<Float>,
         modelSize: Int,
         scale: Int,
         halo: Int,
         window: TileWindow,
-        sourceWidth: Int,
-        sourceHeight: Int,
-        plan: TilePlan,
         target: IntArray,
         bitmap: Bitmap,
     ) {
-        val writeStartX = window.x.coerceAtLeast(0)
-        val writeStartY = window.y
-        val columns = min(plan.stride, sourceWidth - writeStartX)
-        val rows = min(plan.stride, sourceHeight - writeStartY)
+        val writeStartX = window.writeX
+        val writeStartY = window.writeY
+        val columns = window.writeWidth
+        val rows = window.writeHeight
         if (columns <= 0 || rows <= 0) return
 
-        val sourceOffsetX = halo * scale
-        val sourceOffsetY = halo * scale
-        val plane = modelSize * modelSize
+        require(valueRange.endInclusive > valueRange.start) { "invalid model output range: $valueRange" }
+        val sourceOffsetX = (halo + writeStartX - window.x) * scale
+        val sourceOffsetY = (halo + writeStartY - window.y) * scale
         var targetIndex = 0
         for (row in 0 until rows * scale) {
             val sourceY = sourceOffsetY + row
             for (column in 0 until columns * scale) {
                 val sourceX = sourceOffsetX + column
-                val r: Float
-                val g: Float
-                val b: Float
-                if (layout == "NCHW") {
-                    val base = sourceY * modelSize + sourceX
-                    r = tileOutput[base]
-                    g = tileOutput[plane + base]
-                    b = tileOutput[2 * plane + base]
-                } else {
-                    val base = (sourceY * modelSize + sourceX) * 3
-                    r = tileOutput[base]
-                    g = tileOutput[base + 1]
-                    b = tileOutput[base + 2]
-                }
-                target[targetIndex++] = 0xFF000000.toInt() or
-                    (toByte(r) shl 16) or (toByte(g) shl 8) or toByte(b)
+                target[targetIndex++] = RgbTensorCodec.outputPixel(
+                    values = tileOutput,
+                    layout = layout,
+                    width = modelSize,
+                    x = sourceX,
+                    y = sourceY,
+                    valueRange = valueRange,
+                )
             }
         }
         bitmap.setPixels(
@@ -436,15 +416,6 @@ class SuperResolutionEngine(
             columns * scale,
             rows * scale,
         )
-    }
-
-    private fun toByte(value: Float): Int {
-        val scaled = (value * 255f).roundToInt()
-        return when {
-            scaled < 0 -> 0
-            scaled > 255 -> 255
-            else -> scaled
-        }
     }
 
     private companion object {

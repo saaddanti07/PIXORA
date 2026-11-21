@@ -13,6 +13,7 @@ import 'package:pixora/features/image_engine/models/image_processing_request.dar
 import 'package:pixora/features/image_engine/models/image_processing_result.dart';
 import 'package:pixora/features/image_engine/models/processing_tool.dart';
 import 'package:pixora/features/image_engine/services/native_engine_channel.dart';
+import 'package:pixora/features/image_engine/services/gallery_export_service.dart';
 import 'package:pixora/features/image_picker/models/picked_image.dart';
 import 'package:pixora/features/processing/widgets/before_after_view.dart';
 
@@ -31,6 +32,7 @@ class ProcessingScreen extends StatefulWidget {
     required this.processor,
     required this.historyRepository,
     this.maxOutputDimension,
+    this.galleryExportService = const AndroidGalleryExportService(),
     super.key,
   });
 
@@ -39,6 +41,7 @@ class ProcessingScreen extends StatefulWidget {
   final PixoraImageProcessor processor;
   final HistoryRepository historyRepository;
   final int? maxOutputDimension;
+  final GalleryExportService galleryExportService;
 
   @override
   State<ProcessingScreen> createState() => _ProcessingScreenState();
@@ -50,6 +53,8 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   ImageProcessingResult? _result;
   String? _error;
   bool _cancelling = false;
+  bool _historySaved = false;
+  bool _exporting = false;
   StreamSubscription<EngineProgress>? _subscription;
 
   bool get _usesAi => widget.tool == ProcessingToolId.oldPhotoRestoration;
@@ -79,6 +84,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
       _result = null;
       _progress = null;
       _cancelling = false;
+      _historySaved = false;
     });
 
     final ProgressAwareProcessor? aware = _progressAware();
@@ -112,13 +118,14 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
 
     switch (result.status) {
       case ImageProcessingStatus.succeeded:
-        await _recordHistory(result);
+        final bool historySaved = await _recordHistory(result);
         if (!mounted) {
           return;
         }
         setState(() {
           _phase = _Phase.success;
           _result = result;
+          _historySaved = historySaved;
         });
       case ImageProcessingStatus.cancelled:
         setState(() => _phase = _Phase.cancelled);
@@ -130,23 +137,77 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
     }
   }
 
-  Future<void> _recordHistory(ImageProcessingResult result) async {
+  Future<bool> _recordHistory(ImageProcessingResult result) async {
     final String? outputPath = result.outputPath;
-    if (outputPath == null) {
-      return;
-    }
+    if (outputPath == null || outputPath.isEmpty) return false;
+    final File output = File(outputPath);
+    final File original = File(widget.source.path);
+    if (output.absolute.path == original.absolute.path) return false;
+    String? archivedOriginalPath;
     try {
+      if (!await output.exists() || await output.length() <= 0 ||
+          !await original.exists() || await original.length() <= 0) {
+        return false;
+      }
+      final DateTime now = DateTime.now();
+      final String id = '${now.microsecondsSinceEpoch}';
+      final Directory archive = Directory(
+        '${output.parent.path}${Platform.pathSeparator}history_sources',
+      );
+      await archive.create(recursive: true);
+      final String extension = widget.source.fileName.contains('.')
+          ? '.${widget.source.fileName.split('.').last}'
+          : '.img';
+      archivedOriginalPath =
+          '${archive.path}${Platform.pathSeparator}pixora_${id}_original$extension';
+      await original.copy(archivedOriginalPath);
       await widget.historyRepository.add(
         HistoryEntry(
-          id: '${DateTime.now().microsecondsSinceEpoch}',
+          id: id,
           fileName: widget.source.fileName,
           imagePath: outputPath,
-          processedAt: DateTime.now(),
+          originalPath: archivedOriginalPath,
+          processedAt: now,
+          methodId: _usesAi ? 'on-device-ai' : 'classical-enhancement',
+          durationMs: result.duration.inMilliseconds,
+          originalWidth: result.sourceWidth ?? widget.source.dimensions?.width,
+          originalHeight: result.sourceHeight ?? widget.source.dimensions?.height,
+          outputWidth: result.outputWidth,
+          outputHeight: result.outputHeight,
           toolId: widget.tool.name,
         ),
       );
+      return true;
     } on Object {
-      // A history write must never fail the processing run itself.
+      if (archivedOriginalPath != null) {
+        try { await File(archivedOriginalPath).delete(); } on Object { /* best effort */ }
+      }
+      return false;
+    }
+  }
+
+  Future<void> _exportToGallery() async {
+    final String? path = _result?.outputPath;
+    if (path == null || _exporting) return;
+    setState(() => _exporting = true);
+    try {
+      await widget.galleryExportService.saveRestoredImage(
+        path: path,
+        displayName: 'PIXORA_${DateTime.now().microsecondsSinceEpoch}.jpg',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.processingGallerySaved)),
+        );
+      }
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.processingGalleryFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
     }
   }
 
@@ -198,6 +259,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                 source: widget.source,
                 result: _result!,
                 usesAi: _usesAi,
+                historySaved: _historySaved,
+                exporting: _exporting,
+                onExport: _exportToGallery,
                 onClose: () => Navigator.of(context).maybePop(),
               ),
             _Phase.failure => _FailureView(
@@ -321,12 +385,18 @@ class _SuccessView extends StatelessWidget {
     required this.source,
     required this.result,
     required this.usesAi,
+    required this.historySaved,
+    required this.exporting,
+    required this.onExport,
     required this.onClose,
   });
 
   final PickedImage source;
   final ImageProcessingResult result;
   final bool usesAi;
+  final bool historySaved;
+  final bool exporting;
+  final VoidCallback onExport;
   final VoidCallback onClose;
 
   @override
@@ -378,8 +448,13 @@ class _SuccessView extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
+              if (usesAi) ...<Widget>[
+                const SizedBox(height: AppSpacing.xs),
+                Text(l10n.processingAiCapabilityNote, style: textTheme.bodySmall),
+              ],
+              const SizedBox(height: AppSpacing.xs),
               Text(
-                l10n.processingSavedToHistory,
+                historySaved ? l10n.processingSavedToHistory : l10n.processingHistorySaveFailed,
                 style: textTheme.bodySmall,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -391,6 +466,14 @@ class _SuccessView extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton.icon(
+          onPressed: exporting || outputPath == null ? null : onExport,
+          icon: exporting
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.save_alt_rounded),
+          label: Text(exporting ? l10n.processingGallerySaving : l10n.processingGalleryExport),
         ),
         const SizedBox(height: AppSpacing.lg),
         FilledButton(

@@ -82,6 +82,11 @@ Fixtures (copy to the phone's gallery):
 
 ## 3. Results table (to be filled on the device)
 
+The user reports one 640×480 Redmi 9 run of **89.7 seconds**. It is not
+independently logged here and has no second consecutive run, memory reading, or
+ANR/OOM checklist attached. Treat it as a reported observation only, not a gate
+pass; retain the blank table until the exact protocol below is repeated.
+
 Device: `Redmi 9 — <Helio G80 / Helio G35>`, RAM `____ GB`, Android `____`
 
 | Fixture | Working size | Output | Tiles | Run 1 | Run 2 | Peak RSS | Pass? |

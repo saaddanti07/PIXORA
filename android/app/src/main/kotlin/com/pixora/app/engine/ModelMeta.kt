@@ -48,11 +48,23 @@ data class ModelMeta(
             val outputShape = output.getJSONArray("shape")
             val inputLayout = input.optString("layout", "NHWC")
             val outputLayout = output.optString("layout", "NHWC")
+            require(inputLayout == "NCHW" || inputLayout == "NHWC") { "unsupported input layout: $inputLayout" }
+            require(outputLayout == "NCHW" || outputLayout == "NHWC") { "unsupported output layout: $outputLayout" }
             val range = input.optJSONArray("valueRange")
             val inputHeight = if (inputLayout == "NCHW") inputShape.getInt(2) else inputShape.getInt(1)
             val inputWidth = if (inputLayout == "NCHW") inputShape.getInt(3) else inputShape.getInt(2)
             val outputHeight = if (outputLayout == "NCHW") outputShape.getInt(2) else outputShape.getInt(1)
             val outputWidth = if (outputLayout == "NCHW") outputShape.getInt(3) else outputShape.getInt(2)
+            val scale = json.optInt("scale", 4)
+            require(scale > 0 && inputWidth > 0 && inputHeight > 0 &&
+                outputWidth == inputWidth * scale && outputHeight == inputHeight * scale) {
+                "invalid model shape/scale metadata"
+            }
+            val minimum = range?.getDouble(0)?.toFloat() ?: 0f
+            val maximum = range?.getDouble(1)?.toFloat() ?: 1f
+            require(minimum.isFinite() && maximum.isFinite() && maximum > minimum) {
+                "invalid model value range"
+            }
             return ModelMeta(
                 modelId = json.optString("modelId", "real_esrgan_general_x4v3"),
                 inputWidth = inputWidth,
@@ -61,9 +73,8 @@ data class ModelMeta(
                 outputWidth = outputWidth,
                 outputHeight = outputHeight,
                 outputLayout = outputLayout,
-                scale = json.optInt("scale", 4),
-                valueRange = (range?.getDouble(0)?.toFloat() ?: 0f)..
-                    (range?.getDouble(1)?.toFloat() ?: 1f),
+                scale = scale,
+                valueRange = minimum..maximum,
             )
         }
     }

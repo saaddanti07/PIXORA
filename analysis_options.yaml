@@ -1,0 +1,26 @@
+# Static analysis configuration for PIXORA.
+#
+#   flutter analyze
+#
+# The generated localization sources are produced by `flutter gen-l10n`
+# (see l10n.yaml) and are excluded from analysis.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - lib/l10n/generated/**
+  errors:
+    # `package:flutter/material.dart` still ships in the Flutter 3.50 SDK but is
+    # annotated as deprecated in favour of the in-progress `material_ui`
+    # package. PIXORA deliberately stays on the SDK-shipped Material library
+    # until that migration is stable, so the library-level deprecation notice
+    # is silenced here instead of in every single file.
+    deprecated_member_use: ignore
+    deprecated_member_use_from_same_package: ignore
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    always_declare_return_types: true

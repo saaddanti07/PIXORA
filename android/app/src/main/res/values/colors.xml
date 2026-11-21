@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand colours shared by the native splash screen and the launcher icon. -->
+    <color name="pixora_splash_background">#1B1440</color>
+    <color name="ic_launcher_background">#5545E6</color>
+</resources>

@@ -24,8 +24,12 @@ class RgbTensorCodecTest {
     }
 
     @Test fun decodesNchwModelOutputToArgbInRgbOrder() {
-        // Two-pixel RGB planes: red=[1,0], green=[0,1], blue=[0,0].
-        val pixels = floatArrayOf(1f, 0f, 0f, 1f, 0f, 0f)
+        // A 2x2 NCHW tensor: first row is red then green.
+        val pixels = floatArrayOf(
+            1f, 0f, 0f, 0f, // red plane
+            0f, 1f, 0f, 0f, // green plane
+            0f, 0f, 0f, 0f, // blue plane
+        )
         assertEquals(0xFFFF0000.toInt(), RgbTensorCodec.outputPixel(pixels, "NCHW", 2, 0, 0, 0f..1f))
         assertEquals(0xFF00FF00.toInt(), RgbTensorCodec.outputPixel(pixels, "NCHW", 2, 1, 0, 0f..1f))
     }

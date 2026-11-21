@@ -12,7 +12,7 @@ class HistoryRepository extends ChangeNotifier {
   HistoryRepository(this._store);
 
   final KeyValueStore _store;
-  Future<void> _mutationTail = Future<void>.value();
+  Completer<void>? _activeMutation;
 
   List<HistoryEntry> load() {
     final String? raw = _store.read(PreferencesKeys.historyEntries);
@@ -55,16 +55,17 @@ class HistoryRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _enqueue(Future<void> Function() operation) {
-    final Completer<void> result = Completer<void>();
-    _mutationTail = _mutationTail.catchError((Object _) {}).then((_) async {
-      try {
-        await operation();
-        result.complete();
-      } on Object catch (error, stack) {
-        result.completeError(error, stack);
-      }
-    });
-    return result.future;
+  Future<void> _enqueue(Future<void> Function() operation) async {
+    while (_activeMutation != null) {
+      await _activeMutation!.future;
+    }
+    final Completer<void> gate = Completer<void>();
+    _activeMutation = gate;
+    try {
+      await operation();
+    } finally {
+      _activeMutation = null;
+      gate.complete();
+    }
   }
 }

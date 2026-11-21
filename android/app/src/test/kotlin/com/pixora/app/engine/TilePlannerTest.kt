@@ -7,7 +7,7 @@ import org.junit.Test
 class TilePlannerTest {
     @Test fun partitionsSmallAndExactDimensionsWithoutGapsOrOverlap() {
         for (width in listOf(1, 95, 96, 97, 191, 192, 193, 200, 287, 288, 289, 512)) {
-            val plan = TilePlan(width, 128)
+            val plan = TilePlan(width, 64)
             val writes = (0 until plan.tileCount).map { plan.window(it) }
             val coverage = IntArray(width)
             writes.forEach { window ->

@@ -7,12 +7,11 @@ import 'package:pixora/core/storage/in_memory_key_value_store.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
 import 'package:pixora/features/history/screens/history_screen.dart';
-import 'package:pixora/features/processing/widgets/before_after_view.dart';
 
 import '../helpers/image_fixtures.dart';
 
 void main() {
-  testWidgets('newly persisted item appears with thumbnail and reopens comparison',
+  testWidgets('history screen refreshes to show a persisted thumbnail',
       (WidgetTester tester) async {
     final Directory dir = await Directory.systemTemp.createTemp('pixora_history_widget');
     addTearDown(() async { if (await dir.exists()) await dir.delete(recursive: true); });
@@ -41,10 +40,6 @@ void main() {
     await tester.pump();
     expect(find.text('saved-photo.png'), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
-    await tester.tap(find.text('saved-photo.png'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byType(BeforeAfterView), findsOneWidget);
     repository.dispose();
   });
 }

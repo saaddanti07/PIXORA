@@ -244,6 +244,9 @@ void main() {
   ) async {
     final File output = File('${temp.path}/unrecorded.jpg')..writeAsBytesSync(tinyPng);
     final HistoryRepository failing = HistoryRepository(_FailingKeyValueStore());
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final FakeRestorationProcessor processor = FakeRestorationProcessor(
       result: ImageProcessingResult(
         status: ImageProcessingStatus.succeeded,
@@ -254,7 +257,9 @@ void main() {
     await tester.pumpWidget(wrap(ProcessingScreen(
       source: picked(), tool: ProcessingToolId.oldPhotoRestoration,
       processor: processor, historyRepository: failing,
-      historyImageArchiver: FakeHistoryImageArchiver(),
+      historyImageArchiver: FakeHistoryImageArchiver(
+        returnPath: '${temp.path}/copy-to-remove-on-write-failure.png',
+      ),
     )));
     await settle(tester);
     expect(find.text('Saved to your History'), findsNothing);
@@ -402,13 +407,17 @@ class _HangingProcessor implements ImageRestorationService, ProgressAwareProcess
 }
 
 class FakeHistoryImageArchiver implements HistoryImageArchiver {
+  FakeHistoryImageArchiver({this.returnPath});
+
+  final String? returnPath;
+
   @override
   Future<String> archiveOriginal({
     required String sourcePath,
     required String outputPath,
     required String fileName,
     required String entryId,
-  }) async => sourcePath;
+  }) async => returnPath ?? sourcePath;
 }
 
 class FakeGalleryExportService implements GalleryExportService {

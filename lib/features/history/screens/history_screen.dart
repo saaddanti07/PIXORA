@@ -13,6 +13,7 @@ class HistoryScreen extends StatefulWidget {
   const HistoryScreen({
     required this.repository,
     required this.onStartRestoration,
+    this.thumbnailBuilder,
     super.key,
   });
 
@@ -20,6 +21,9 @@ class HistoryScreen extends StatefulWidget {
 
   /// Takes the user to the Home tab so they can pick a photo.
   final VoidCallback onStartRestoration;
+
+  /// Allows an alternate thumbnail renderer in previews and widget tests.
+  final Widget Function(BuildContext context, HistoryEntry entry)? thumbnailBuilder;
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -49,6 +53,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 else
                   HistoryList(
                     entries: entries,
+                    thumbnailBuilder: widget.thumbnailBuilder,
                     onOpen: (HistoryEntry entry) => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => HistoryComparisonScreen(entry: entry),

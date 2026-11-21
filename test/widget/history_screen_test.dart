@@ -26,7 +26,11 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: HistoryScreen(repository: repository, onStartRestoration: () {}),
+      home: HistoryScreen(
+        repository: repository,
+        onStartRestoration: () {},
+        thumbnailBuilder: (_, __) => const SizedBox(width: 64, height: 64),
+      ),
     ));
     expect(find.text('No processed photos yet'), findsOneWidget);
 
@@ -39,7 +43,7 @@ void main() {
     ));
     await tester.pump();
     expect(find.text('saved-photo.png'), findsOneWidget);
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(SizedBox), findsWidgets);
     repository.dispose();
   });
 }

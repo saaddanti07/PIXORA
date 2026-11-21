@@ -7,10 +7,16 @@ import 'package:pixora/core/widgets/pixora_card.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
 
 class HistoryList extends StatelessWidget {
-  const HistoryList({required this.entries, required this.onOpen, super.key});
+  const HistoryList({
+    required this.entries,
+    required this.onOpen,
+    this.thumbnailBuilder,
+    super.key,
+  });
 
   final List<HistoryEntry> entries;
   final ValueChanged<HistoryEntry> onOpen;
+  final Widget Function(BuildContext context, HistoryEntry entry)? thumbnailBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +38,7 @@ class HistoryList extends StatelessWidget {
                     children: <Widget>[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Image.file(
+                        child: thumbnailBuilder?.call(context, entry) ?? Image.file(
                           File(entry.imagePath),
                           width: 64,
                           height: 64,

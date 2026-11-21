@@ -8,9 +8,14 @@ import 'package:pixora/features/processing/widgets/before_after_view.dart';
 
 /// Reopens the saved original/result pair from the private history archive.
 class HistoryComparisonScreen extends StatelessWidget {
-  const HistoryComparisonScreen({required this.entry, super.key});
+  const HistoryComparisonScreen({
+    required this.entry,
+    this.imageBuilder,
+    super.key,
+  });
 
   final HistoryEntry entry;
+  final Widget Function(BuildContext context, String path, BoxFit fit)? imageBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +41,11 @@ class HistoryComparisonScreen extends StatelessWidget {
                 aspectRatio: aspect,
                 beforeLabel: l10n.processingOriginal,
                 afterLabel: l10n.processingResult,
+                imageBuilder: imageBuilder,
               )
             else
-              Image.file(File(entry.imagePath), fit: BoxFit.contain),
+              imageBuilder?.call(context, entry.imagePath, BoxFit.contain) ??
+                  Image.file(File(entry.imagePath), fit: BoxFit.contain),
             const SizedBox(height: AppSpacing.md),
             Text(entry.methodId == 'classical-enhancement'
                 ? l10n.processingClassicalBadge

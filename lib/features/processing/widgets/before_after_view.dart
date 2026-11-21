@@ -16,6 +16,7 @@ class BeforeAfterView extends StatefulWidget {
     required this.beforeLabel,
     required this.afterLabel,
     this.cacheWidth = 1200,
+    this.imageBuilder,
     super.key,
   });
 
@@ -25,6 +26,7 @@ class BeforeAfterView extends StatefulWidget {
   final String beforeLabel;
   final String afterLabel;
   final int cacheWidth;
+  final Widget Function(BuildContext context, String path, BoxFit fit)? imageBuilder;
 
   @override
   State<BeforeAfterView> createState() => _BeforeAfterViewState();
@@ -40,7 +42,7 @@ class _BeforeAfterViewState extends State<BeforeAfterView> {
     setState(() => _position = (dx / width).clamp(0.02, 0.98));
   }
 
-  Widget _image(String path, BoxFit fit) => Image.file(
+  Widget _image(String path, BoxFit fit) => widget.imageBuilder?.call(context, path, fit) ?? Image.file(
         File(path),
         fit: fit,
         key: ValueKey<String>(path),

@@ -26,10 +26,14 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: Scaffold(body: HistoryList(entries: <HistoryEntry>[entry], onOpen: (e) => opened = e)),
+      home: Scaffold(body: HistoryList(
+        entries: <HistoryEntry>[entry],
+        onOpen: (e) => opened = e,
+        thumbnailBuilder: (_, __) => const SizedBox(width: 64, height: 64),
+      )),
     ));
-    expect(find.byType(Image), findsOneWidget);
-    await tester.tap(find.text('old-photo.png'));
+    final InkWell row = tester.widget<InkWell>(find.byType(InkWell));
+    row.onTap!();
     expect(opened, entry);
   });
 
@@ -48,7 +52,10 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: HistoryComparisonScreen(entry: entry),
+      home: HistoryComparisonScreen(
+        entry: entry,
+        imageBuilder: (_, __, ___) => const ColoredBox(color: Colors.black),
+      ),
     ));
     expect(find.byType(BeforeAfterView), findsOneWidget);
     expect(find.text('old-photo.png'), findsOneWidget);

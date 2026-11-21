@@ -8,6 +8,7 @@ import 'package:pixora/core/models/image_dimensions.dart';
 import 'package:pixora/core/storage/in_memory_key_value_store.dart';
 import 'package:pixora/core/utilities/image_format.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
+import 'package:pixora/features/history/data/history_image_archiver.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
 import 'package:pixora/features/image_engine/interfaces/image_restoration_service.dart';
 import 'package:pixora/features/image_engine/interfaces/progress_aware_processor.dart';
@@ -177,6 +178,7 @@ void main() {
           tool: ProcessingToolId.oldPhotoRestoration,
           processor: processor,
           historyRepository: history,
+          historyImageArchiver: FakeHistoryImageArchiver(),
           maxOutputDimension: 2048,
         ),
       ),
@@ -224,6 +226,7 @@ void main() {
     await tester.pumpWidget(wrap(ProcessingScreen(
       source: picked(), tool: ProcessingToolId.oldPhotoRestoration,
       processor: processor, historyRepository: history,
+      historyImageArchiver: FakeHistoryImageArchiver(),
       galleryExportService: gallery,
     )));
     await settle(tester);
@@ -251,6 +254,7 @@ void main() {
     await tester.pumpWidget(wrap(ProcessingScreen(
       source: picked(), tool: ProcessingToolId.oldPhotoRestoration,
       processor: processor, historyRepository: failing,
+      historyImageArchiver: FakeHistoryImageArchiver(),
     )));
     await settle(tester);
     expect(find.text('Saved to your History'), findsNothing);
@@ -395,6 +399,16 @@ class _HangingProcessor implements ImageRestorationService, ProgressAwareProcess
   @override
   Future<ImageProcessingResult> restore(ImageProcessingRequest request) =>
       _pending.future;
+}
+
+class FakeHistoryImageArchiver implements HistoryImageArchiver {
+  @override
+  Future<String> archiveOriginal({
+    required String sourcePath,
+    required String outputPath,
+    required String fileName,
+    required String entryId,
+  }) async => sourcePath;
 }
 
 class FakeGalleryExportService implements GalleryExportService {

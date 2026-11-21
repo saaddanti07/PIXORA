@@ -6,6 +6,7 @@ import 'package:pixora/app/localization/l10n.dart';
 import 'package:pixora/app/theme/app_spacing.dart';
 import 'package:pixora/app/theme/pixora_palette.dart';
 import 'package:pixora/features/history/data/history_repository.dart';
+import 'package:pixora/features/history/data/history_image_archiver.dart';
 import 'package:pixora/features/history/models/history_entry.dart';
 import 'package:pixora/features/image_engine/interfaces/image_processor.dart';
 import 'package:pixora/features/image_engine/interfaces/progress_aware_processor.dart';
@@ -33,6 +34,7 @@ class ProcessingScreen extends StatefulWidget {
     required this.historyRepository,
     this.maxOutputDimension,
     this.galleryExportService = const AndroidGalleryExportService(),
+    this.historyImageArchiver = const AppPrivateHistoryImageArchiver(),
     super.key,
   });
 
@@ -42,6 +44,7 @@ class ProcessingScreen extends StatefulWidget {
   final HistoryRepository historyRepository;
   final int? maxOutputDimension;
   final GalleryExportService galleryExportService;
+  final HistoryImageArchiver historyImageArchiver;
 
   @override
   State<ProcessingScreen> createState() => _ProcessingScreenState();
@@ -140,27 +143,18 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   Future<bool> _recordHistory(ImageProcessingResult result) async {
     final String? outputPath = result.outputPath;
     if (outputPath == null || outputPath.isEmpty) return false;
-    final File output = File(outputPath);
     final File original = File(widget.source.path);
-    if (output.absolute.path == original.absolute.path) return false;
+    if (File(outputPath).absolute.path == original.absolute.path) return false;
     String? archivedOriginalPath;
     try {
-      if (!await output.exists() || await output.length() <= 0 ||
-          !await original.exists() || await original.length() <= 0) {
-        return false;
-      }
       final DateTime now = DateTime.now();
       final String id = '${now.microsecondsSinceEpoch}';
-      final Directory archive = Directory(
-        '${output.parent.path}${Platform.pathSeparator}history_sources',
+      archivedOriginalPath = await widget.historyImageArchiver.archiveOriginal(
+        sourcePath: widget.source.path,
+        outputPath: outputPath,
+        fileName: widget.source.fileName,
+        entryId: id,
       );
-      await archive.create(recursive: true);
-      final String extension = widget.source.fileName.contains('.')
-          ? '.${widget.source.fileName.split('.').last}'
-          : '.img';
-      archivedOriginalPath =
-          '${archive.path}${Platform.pathSeparator}pixora_${id}_original$extension';
-      await original.copy(archivedOriginalPath);
       await widget.historyRepository.add(
         HistoryEntry(
           id: id,

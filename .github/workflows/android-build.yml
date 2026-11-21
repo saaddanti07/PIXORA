@@ -296,11 +296,27 @@ jobs:
 
       - name: Run native tiling tests
         working-directory: android
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e
           if [ -x ./gradlew ]; then
-            ./gradlew :app:testDebugUnitTest --no-daemon
+            ./gradlew :app:testDebugUnitTest --no-daemon 2>&1 | tee native-tests.log
+            TEST_EXIT=${PIPESTATUS[0]}
           else
-            gradle :app:testDebugUnitTest --no-daemon
+            gradle :app:testDebugUnitTest --no-daemon 2>&1 | tee native-tests.log
+            TEST_EXIT=${PIPESTATUS[0]}
+          fi
+          if [ "$TEST_EXIT" != "0" ]; then
+            {
+              echo "### Native tiling tests — exit ${TEST_EXIT}"
+              echo '```'
+              tail -c 20000 native-tests.log
+              echo '```'
+            } > native-test-report.md
+            gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+              -F body=@native-test-report.md || true
+            exit "$TEST_EXIT"
           fi
 
       - name: Confirm the model ships inside the APK

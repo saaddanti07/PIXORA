@@ -34,7 +34,9 @@ void main() {
     ));
     final Finder rowFinder = find.ancestor(
       of: find.text('old-photo.png'),
-      matching: find.byType(InkWell),
+      matching: find.byWidgetPredicate(
+        (Widget widget) => widget is InkWell && widget.onTap != null,
+      ),
     );
     final InkWell row = tester.widget<InkWell>(rowFinder);
     row.onTap!();

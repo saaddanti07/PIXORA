@@ -13,8 +13,8 @@ import '../helpers/image_fixtures.dart';
 void main() {
   testWidgets('history screen refreshes to show a persisted thumbnail',
       (WidgetTester tester) async {
-    final Directory dir = await Directory.systemTemp.createTemp('pixora_history_widget');
-    addTearDown(() async { if (await dir.exists()) await dir.delete(recursive: true); });
+    final Directory dir = Directory.systemTemp.createTempSync('pixora_history_widget');
+    addTearDown(() => dir.deleteSync(recursive: true));
     final File original = File('${dir.path}/original.png')..writeAsBytesSync(tinyPng);
     final File restored = File('${dir.path}/restored.png')..writeAsBytesSync(tinyPng);
     final HistoryRepository repository = HistoryRepository(InMemoryKeyValueStore());

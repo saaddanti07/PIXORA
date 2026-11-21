@@ -12,8 +12,8 @@ import '../helpers/image_fixtures.dart';
 
 void main() {
   testWidgets('thumbnail row tap selects the saved entry for reopening', (tester) async {
-    final Directory dir = await Directory.systemTemp.createTemp('pixora_history_list');
-    addTearDown(() async { if (await dir.exists()) await dir.delete(recursive: true); });
+    final Directory dir = Directory.systemTemp.createTempSync('pixora_history_list');
+    addTearDown(() => dir.deleteSync(recursive: true));
     final File image = File('${dir.path}/result.png')..writeAsBytesSync(tinyPng);
     final HistoryEntry entry = HistoryEntry(
       id: 'saved', fileName: 'old-photo.png', imagePath: image.path,
@@ -38,8 +38,8 @@ void main() {
   });
 
   testWidgets('comparison route renders the stored original and restored pair', (tester) async {
-    final Directory dir = await Directory.systemTemp.createTemp('pixora_history_compare');
-    addTearDown(() async { if (await dir.exists()) await dir.delete(recursive: true); });
+    final Directory dir = Directory.systemTemp.createTempSync('pixora_history_compare');
+    addTearDown(() => dir.deleteSync(recursive: true));
     final File original = File('${dir.path}/original.png')..writeAsBytesSync(tinyPng);
     final File output = File('${dir.path}/restored.png')..writeAsBytesSync(tinyPng);
     final HistoryEntry entry = HistoryEntry(

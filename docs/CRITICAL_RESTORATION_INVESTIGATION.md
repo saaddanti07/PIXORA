@@ -39,7 +39,7 @@ The intended result path is the engine's newly created JPEG; History keeps that 
 
 These tests protect against a future path-wiring regression. They do not inspect the absent device artifact.
 
-## 4. Controlled synthetic benchmark (actual results, baseline only)
+## 4. Controlled synthetic benchmark (actual LiteRT model output, synthetic only)
 
 A reproducible procedural 640×480 test chart plus exact clean reference and four artificial degradations is in `test/fixtures/restoration_benchmark/`. It is deliberately a **synthetic chart, not a photograph**. The CI model-preparation job now runs the actual converted TFLite model over paired fixtures in the app's 128-pixel tiles, preserves the first damaged-fixture tensor and raw pre-conversion output, saves the stitched model PNGs and labeled same-canvas panels, and reports both damage-region MAE reduction versus a matched bicubic pipeline and image metrics versus clean reference. Reproduce with:
 
@@ -52,18 +52,22 @@ python tool/benchmark_synthetic_restoration.py \\
   --report /tmp/pixora-damage-benchmark.json
 ```
 
-The checked-in JSON contains fixed image/mask SHA-256 values and baseline quality versus the clean synthetic reference. Actual LiteRT outputs are generated and scored in CI; synthetic-model output rows there are measurements of this converted super-resolution model only, not proof on real photos or Redmi 9. The JSON includes matching bicubic damage-region baselines and explicitly separates output pixel count from restoration quality.
+The actual converted TFLite model was run on GitHub Actions CPU over the four synthetic paired fixtures, in the 128×128 input tiles and conservative Redmi/low-RAM policy (640×480 fixture → 384×288 working input → 1536×1152 output; 12 tiles/image). The immutable full report is `test/fixtures/restoration_benchmark/litert_ci_report.json`; the CI run `45009874028` also uploaded `pixora-litert-model` containing the raw input/output tile arrays, working images, stitched model output PNGs, and comparison panels. That synthetic artifact is available from the run’s Actions artifacts; it is not a real photo or target-device run.
 
-| Synthetic degradation | Mask area | No-op damage-region MAE (0–1) | No-op full-image MAE (0–1) | No-op PSNR (dB) | No-op SSIM |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Scratches | 2.41% | 0.29869 | 0.00719 | 24.32 | 0.93418 |
-| Stains | 3.96% | 0.17769 | 0.00704 | 27.30 | 0.97229 |
-| Fading | 100.00% | 0.11085 | 0.11085 | 17.81 | 0.93957 |
-| Severe: scratches, stains, missing patch | 12.69% | 0.18735 | 0.02378 | 20.91 | 0.85881 |
+**Negative result:** against a matched downsample-plus-bicubic pipeline, Real-ESRGAN increased error in the damaged regions for all four cases. It made no measured restoration improvement on these tests.
 
-Reference SHA-256: `949da4748255a17455b5260db4c3e7820e912dc475c99fbf0a8a135ac48650ef`. Input hashes are in `benchmark.json`. The report keeps damage-region error reduction separate from whole-image quality and records original output dimensions independently; outputs are resampled to the reference canvas only for damage comparisons. MAE/PSNR/SSIM are not perceptual-quality guarantees. No restored-output metrics, restoration percentage, or “80% improvement” claim is made because no real model output has been run against this benchmark.
+| Synthetic degradation | Mask area | Bicubic damage MAE | LiteRT model damage MAE | Error reduction vs bicubic | Model global MAE | Model SSIM |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Scratches | 2.41% | 0.25490 | 0.30542 | **−19.82%** | 0.01466 | 0.91666 |
+| Stains | 3.96% | 0.17761 | 0.18516 | **−4.25%** | 0.01406 | 0.95750 |
+| Fading | 100.00% | 0.11152 | 0.11481 | **−2.95%** | 0.11481 | 0.93019 |
+| Severe: scratches, stains, missing patch | 12.69% | 0.17534 | 0.19410 | **−10.70%** | 0.03136 | 0.83915 |
 
-There is no same-image before/raw/final AI comparison to show yet. The checked-in image set is clean reference + synthetic damaged inputs/masks only; I will not label a no-op or filter image as AI restoration.
+For context, no-op damage-region MAEs against clean reference are scratches 0.29869, stains 0.17769, fading 0.11085, severe 0.18735. The baseline comparison controls for downsampling, upscaling, and the model's output canvas; the second comparator intentionally retains the raw unscaled damage baseline. Metrics are aligned to the 640×480 reference canvas, while output size is recorded independently. MAE/SSIM do not capture perception or hallucinations and this chart is synthetic, but every result is negative rather than supporting restoration quality.
+
+Evidence identity: model TFLite SHA-256 `cedda0d6c8f59c3eca8558e7002a571f5437079d922a486068384599b2d0ddab`; first scratched-fixture input tensor SHA-256 `65680d3492b191d1fcd4a1909962f6e5aec3944d33bf035e40d2b912a590d364`; raw first output tensor SHA-256 `8406227fa2c49ed77884c2e94b6ce568cab6439f18ae80f4c1a8477d80163b58`. The raw tile was float32 NCHW, 3×512×512, min −0.06381, max 1.20455, mean 0.44709; app-like RGB conversion/clipping then stitching/PNG encoding follows. First input was float32 NCHW, 3×128×128, RGB normalized [0,1], min 0.12549, max 0.96078, mean 0.44499. Per-image output hashes and paths are in the JSON.
+
+This is the requested original/damaged input + model output + final stitched output + comparison for **the generated synthetic pair only**. The checkout does not have the user's photo, so it cannot produce or claim a real-photo before/raw/final comparison. No “80% improvement” claim is supported; this actual controlled test points the opposite way.
 
 ## 5. Candidate model/licence/runtime assessment
 
@@ -86,7 +90,7 @@ The Microsoft candidate is a **research candidate, not an app recommendation**: 
 
 ## 7. APK / validation status
 
-The earlier debug APK build passed CI before this latest benchmark integration. Local Flutter, ADB, and physical device are unavailable in this checkout. CI must run after these changes are pushed to validate the new actual-LiteRT synthetic benchmark as well as analyzer/tests/native tests/build. That debug APK and synthetic score are diagnostics only; neither is a physical-device restoration fix. The acceptance blocker remains open until real same-image evidence demonstrates meaningful damage reduction and a suitable model passes the target-device gates.
+CI run `45009874028` passed the actual-LiteRT synthetic benchmark, Flutter analysis/tests, native tiling tests, and Android debug APK build (APK uploaded as a workflow artifact; reported size 171,804,469 bytes). Local Flutter, ADB, and physical device are unavailable in this checkout. The APK, CI model-conversion fidelity gate, and synthetic quality measurements are diagnostics only; neither APK success nor inference completion is a physical-device restoration fix. The acceptance blocker remains open until real same-image evidence demonstrates meaningful damage reduction and a suitable model passes the target-device gates.
 
 ### Needed to close this incident
 

@@ -134,7 +134,7 @@ def generate(folder: Path) -> dict:
             "input": {"path": input_path.name, "sha256": sha256(input_path)},
             "mask": {"path": mask_path.name, "sha256": sha256(mask_path)},
             "no_op_baseline_vs_clean_reference": metrics(clean, damaged, mask),
-            "model_output": "NOT_RUN: no LiteRT model/runtime/device photo was available in this workspace",
+            "model_output": "NOT_RUN: this baseline report was generated without --model or external model outputs",
         }
     results["clean_reference"] = {"path": clean_path.name, "sha256": sha256(clean_path)}
     return results

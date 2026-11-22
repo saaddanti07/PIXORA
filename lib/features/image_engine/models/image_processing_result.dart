@@ -1,0 +1,52 @@
+import 'package:flutter/foundation.dart';
+
+/// Outcome of one processing run.
+enum ImageProcessingStatus { succeeded, failed, cancelled }
+
+/// Result of an on-device processing run.
+@immutable
+class ImageProcessingResult {
+  const ImageProcessingResult({
+    required this.status,
+    this.outputPath,
+    this.modelId,
+    this.duration = Duration.zero,
+    this.failureReason,
+    this.sourceWidth,
+    this.sourceHeight,
+    this.outputWidth,
+    this.outputHeight,
+  });
+
+  factory ImageProcessingResult.failed(String reason) => ImageProcessingResult(
+        status: ImageProcessingStatus.failed,
+        failureReason: reason,
+      );
+
+  const ImageProcessingResult.cancelled()
+      : status = ImageProcessingStatus.cancelled,
+        outputPath = null,
+        modelId = null,
+        duration = Duration.zero,
+        failureReason = null,
+        sourceWidth = null,
+        sourceHeight = null,
+        outputWidth = null,
+        outputHeight = null;
+
+  final ImageProcessingStatus status;
+
+  /// Local path of the produced image. Always on the device.
+  final String? outputPath;
+
+  /// Identifier of the model or algorithm that produced the result.
+  final String? modelId;
+  final Duration duration;
+  final String? failureReason;
+  final int? sourceWidth;
+  final int? sourceHeight;
+  final int? outputWidth;
+  final int? outputHeight;
+
+  bool get isSuccess => status == ImageProcessingStatus.succeeded;
+}

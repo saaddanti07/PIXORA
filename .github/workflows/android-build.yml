@@ -1,0 +1,432 @@
+name: Android build
+
+# PIXORA is developed without a local Android Studio installation: every
+# verification and the APK itself are produced by this workflow.
+on:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+      - 'feature/**'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+# Needed so a failing verification run can post its output back to the commit
+# (the Actions log archive is not always reachable from every environment).
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.50.0'
+  JAVA_VERSION: '21'
+  MODEL_DIR: android/app/src/main/assets/models
+  MODEL_FILE: realesr_general_x4v3_fp32.tflite
+
+jobs:
+  # Phase 02, Step 2 — build the LiteRT model from the pinned upstream weights
+  # and prove it is numerically faithful before anything is allowed to bundle it.
+  prepare-model:
+    name: Prepare LiteRT model
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: tool/requirements-model.txt
+
+      - name: Restore a previously converted model
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            android/app/src/main/assets/models
+            models/report.json
+          key: model-${{ hashFiles('tool/convert_model.py', 'models/weights.sha256', 'tool/requirements-model.txt') }}
+
+      - name: Install conversion toolchain
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -r tool/requirements-model.txt
+          python -c "import torch, litert_torch, ai_edge_litert; \
+                     print('torch', torch.__version__); \
+                     print('litert_torch', getattr(litert_torch, '__version__', '?')); \
+                     print('ai_edge_litert', getattr(ai_edge_litert, '__version__', '?'))"
+
+      - name: Convert and verify the model
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          python tool/convert_model.py \
+            --out "$MODEL_DIR/$MODEL_FILE" \
+            --report models/report.json
+
+      - name: Verify the artefact against its own report
+        run: |
+          set -euo pipefail
+          MODEL="$MODEL_DIR/$MODEL_FILE"
+          test -f "$MODEL" || { echo "model missing: $MODEL"; exit 1; }
+          EXPECTED=$(python -c "import json;print(json.load(open('models/report.json'))['model']['tfliteSha256'])")
+          ACTUAL=$(sha256sum "$MODEL" | cut -d' ' -f1)
+          echo "expected $EXPECTED"
+          echo "actual   $ACTUAL"
+          test "$EXPECTED" = "$ACTUAL" || { echo "model digest mismatch"; exit 1; }
+          ls -l "$MODEL_DIR"
+
+      - name: Install benchmark inference dependencies
+        run: python -m pip install -r tool/requirements-restoration-benchmark.txt
+
+      - name: Run the paired synthetic damage benchmark on LiteRT CPU
+        run: |
+          set -euo pipefail
+          mkdir -p .benchmark
+          python tool/benchmark_synthetic_restoration.py \
+            --out-dir .benchmark/restoration-benchmark/fixtures \
+            --outputs .benchmark/restoration-benchmark/results \
+            --model "$MODEL_DIR/$MODEL_FILE" \
+            --report .benchmark/restoration-benchmark/benchmark.json
+          python - <<'PY'
+          import json, pathlib
+          report = json.loads(pathlib.Path(".benchmark/restoration-benchmark/benchmark.json").read_text())
+          inference = report["inference"]
+          rows = [
+              "### Synthetic damage restoration benchmark — actual LiteRT inference",
+              "",
+              f"Model SHA-256: `{inference['model']['sha256']}`; tensor shapes: `{inference['model']['input_shape']}` → `{inference['model']['output_shape']}`; first actual input tile SHA-256: `{inference['first_model_input_tile']['tensor_sha256_little_endian_f32']}`; first raw output tile SHA-256: `{inference['raw_first_tile_output']['tensor_sha256_little_endian_f32']}`.",
+              "",
+              "| Fixture | Baseline bicubic damage-region MAE | Model damage-region MAE | Change vs bicubic | Model global MAE | Model SSIM |",
+              "| --- | ---: | ---: | ---: | ---: | ---: |",
+          ]
+          for name, item in report["variants"].items():
+              output = item["model_output"]
+              baseline = output["matched_working_size_bicubic_baseline"]
+              actual = output["metrics_after_resize_to_reference_canvas"]
+              change = output["damage_region_error_reduction_percent_vs_bicubic"]
+              rows.append(
+                  f"| {name} | {baseline['damage_region_mae_0_1']:.5f} | "
+                  f"{actual['damage_region_mae_0_1']:.5f} | {change:+.2f}% | "
+                  f"{actual['global_mae_0_1']:.5f} | {actual['global_ssim']:.5f} |"
+              )
+          rows += [
+              "",
+              f"Output: `{inference['resolution_observation']['network_output_dimensions']}` from working input `{inference['resolution_observation']['working_dimensions']}` at ×{inference['resolution_observation']['network_scale']}. No high-resolution clean target exists, so resolution fidelity is not scored. Synthetic fixtures only; this is not a Redmi 9 or real-photo result.",
+              "",
+          ]
+          pathlib.Path("restoration-benchmark-summary.md").write_text("\n".join(rows))
+          print("\n".join(rows))
+          PY
+          cat restoration-benchmark-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish synthetic benchmark measurements on the commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            cat restoration-benchmark-summary.md
+            echo
+            echo '<details><summary>Full benchmark JSON</summary>'
+            echo
+            echo '```json'
+            cat .benchmark/restoration-benchmark/benchmark.json
+            echo '```'
+            echo '</details>'
+          } > restoration-benchmark-comment.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@restoration-benchmark-comment.md || echo "could not attach synthetic benchmark report"
+
+      - name: Summarise the model report
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          report = json.loads(pathlib.Path("models/report.json").read_text())
+          model, fidelity = report["model"], report["fidelity"]
+          lines = [
+            "### Phase 02 model pipeline",
+            "",
+            "| Field | Value |",
+            "| --- | --- |",
+            f"| model | `{model['id']}` ({model['architecture']}) |",
+            f"| licence | {model['license']} |",
+            f"| parameters | {model['parameters']:,} |",
+            f"| weights | {model['weightsBytes']:,} bytes |",
+            f"| weights sha256 | `{model['weightsSha256']}` |",
+            f"| tflite | {model['tfliteBytes']:,} bytes |",
+            f"| tflite sha256 | `{model['tfliteSha256']}` |",
+            f"| backend | {report['conversion']['backend']} |",
+            f"| min correlation | **{fidelity['minCorrelation']:.6f}** |",
+            f"| max abs error | {fidelity['maxAbsError'] * 255:.2f}/255 |",
+            f"| model vs bicubic MAE | {fidelity.get('meanAbsChangeVsBicubic', {})} |",
+            f"| gate | {'PASS' if fidelity['passed'] else 'FAIL'} |",
+            f"| runner latency | {report['timing']['perTileMs']} ms/tile ({report['timing']['hostCpus']} cpus, not a phone) |",
+            "",
+          ]
+          pathlib.Path("model-summary.md").write_text("\n".join(lines))
+          print("\n".join(lines))
+          PY
+          cat model-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish the model report on the commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            cat model-summary.md
+            echo
+            echo '<details><summary>models/report.json</summary>'
+            echo
+            echo '```json'
+            head -c 12000 models/report.json
+            echo '```'
+            echo '</details>'
+          } > model-report.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@model-report.md || echo "could not attach the model report"
+
+      - name: Upload the model artefact
+        uses: actions/upload-artifact@v6
+        with:
+          name: pixora-litert-model
+          path: |
+            android/app/src/main/assets/models
+            models/report.json
+            model-summary.md
+            .benchmark/restoration-benchmark
+          if-no-files-found: error
+          retention-days: 30
+
+  analyze-and-test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Show toolchain versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Static analysis
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee analysis.log
+          echo "ANALYZE_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        run: |
+          set +e
+          flutter test --reporter expanded 2>&1 | tee test.log
+          echo "TEST_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+
+      - name: Publish failure details on the commit
+        if: env.ANALYZE_EXIT != '0' || env.TEST_EXIT != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "### flutter analyze — exit ${ANALYZE_EXIT}"
+            echo '```'
+            tail -c 18000 analysis.log
+            echo '```'
+            echo
+            echo "### flutter test — exit ${TEST_EXIT}"
+            echo '```'
+            tail -c 40000 test.log
+            echo '```'
+          } > verification-report.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@verification-report.md || echo "could not attach report"
+
+      - name: Fail when analysis or tests failed
+        if: env.ANALYZE_EXIT != '0' || env.TEST_EXIT != '0'
+        run: exit 1
+
+  build-apk:
+    name: Build debug APK
+    needs: prepare-model
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Fetch the verified model
+        uses: actions/download-artifact@v6
+        with:
+          name: pixora-litert-model
+          path: .model-artifact
+
+      - name: Place the model in the Android assets
+        run: |
+          set -euo pipefail
+          mkdir -p "$MODEL_DIR"
+          ls -l .model-artifact
+          find .model-artifact -name '*.tflite' -print -exec cp {} "$MODEL_DIR/" \;
+          find .model-artifact -name '*.meta.json' -print -exec cp {} "$MODEL_DIR/" \;
+          test -f "$MODEL_DIR/$MODEL_FILE" || { echo "model missing after download"; exit 1; }
+          ls -l "$MODEL_DIR"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Accept Android SDK licenses
+        run: |
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          fi
+
+      - name: Build debug APK
+        run: |
+          set +e
+          flutter build apk --debug \
+            --build-name "0.2.1" \
+            --build-number "${{ github.run_number }}" \
+            --dart-define "PIXORA_BUILD=${{ github.run_number }}" 2>&1 | tee build.log
+          echo "BUILD_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+
+      - name: Publish build failure details on the commit
+        if: env.BUILD_EXIT != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "### flutter build apk --debug — exit ${BUILD_EXIT}"
+            echo
+            echo 'Compile errors and Gradle failures:'
+            echo '```'
+            grep -nE "^e: |error:|error\b|FAILURE:|What went wrong|Caused by|^> " build.log | tail -80 || true
+            echo '```'
+            echo
+            echo 'Tail:'
+            echo '```'
+            tail -c 12000 build.log
+            echo '```'
+          } > build-report.md
+          gh api -X POST \
+            "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@build-report.md || echo "could not attach report"
+
+      - name: Stop when the build failed
+        if: env.BUILD_EXIT != '0'
+        run: exit 1
+
+      - name: Run native tiling tests
+        working-directory: android
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          if [ -x ./gradlew ]; then
+            ./gradlew :app:testDebugUnitTest --no-daemon 2>&1 | tee native-tests.log
+            TEST_EXIT=${PIPESTATUS[0]}
+          else
+            gradle :app:testDebugUnitTest --no-daemon 2>&1 | tee native-tests.log
+            TEST_EXIT=${PIPESTATUS[0]}
+          fi
+          if [ "$TEST_EXIT" != "0" ]; then
+            {
+              echo "### Native tiling tests — exit ${TEST_EXIT}"
+              echo '```'
+              tail -c 20000 native-tests.log
+              echo '```'
+            } > native-test-report.md
+            gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+              -F body=@native-test-report.md || true
+            exit "$TEST_EXIT"
+          fi
+
+      - name: Confirm the model ships inside the APK
+        run: |
+          set -euo pipefail
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          SIZE=$(stat -c %s "$APK")
+          echo "apk bytes: $SIZE"
+          unzip -l "$APK" | grep -E 'assets/models/' || {
+            echo "the model is not inside the APK"; exit 1; }
+          {
+            echo "### Debug APK"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| size | ${SIZE} bytes ($(python3 -c "print(f'{$SIZE/1048576:.2f}')") MiB) |"
+            echo "| model bundle | $(unzip -l "$APK" | grep -c 'assets/models/') file(s) |"
+            echo "| build stamp | ${{ github.run_number }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish the delivery summary on the commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          {
+            echo "### Debug APK — Phase 02"
+            echo
+            echo '| Field | Value |'
+            echo '| --- | --- |'
+            echo "| apk bytes | $(stat -c %s "$APK") |"
+            echo "| model files in apk | $(unzip -l "$APK" | grep -c 'assets/models/') |"
+            echo '| model entries |'
+            echo '```'
+            unzip -l "$APK" | grep 'assets/models/' || true
+            echo '```'
+            echo "| native libraries |"
+            echo '```'
+            unzip -l "$APK" | grep -E '\.so$' | awk '{print $1, $4}' | sort -k2 || true
+            echo '```'
+          } > apk-summary.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@apk-summary.md || echo "could not attach the apk summary"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: pixora-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

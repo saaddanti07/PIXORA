@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "syntheticOnly": true,
+  "dimensions": [
+    640,
+    480
+  ],
+  "variants": {
+    "scratches": {
+      "input": {
+        "path": "input_scratches.png",
+        "sha256": "81a141c96bc6bff8b57dde915677b5c8c4b27817ec9627eaaf08e9e54ae48188"
+      },
+      "mask": {
+        "path": "mask_scratches.png",
+        "sha256": "fb82e082770df39e59dca00d5eb8f7718ecee0d7ec39722750ecd4630dfd7f1b"
+      },
+      "no_op_baseline_vs_clean_reference": {
+        "global_mae_0_1": 0.007193039637058973,
+        "damage_region_mae_0_1": 0.2986878454685211,
+        "damage_mask_fraction": 0.024055989583333333,
+        "global_psnr_db": 24.31525591314574,
+        "global_ssim": 0.9341762661933899
+      },
+      "model_output": "NOT_RUN: no LiteRT model/runtime/device photo was available in this workspace"
+    },
+    "stains": {
+      "input": {
+        "path": "input_stains.png",
+        "sha256": "557e4909fc6b10992430ea211e9e4d574aa2822a3474addccdff14f83e80a483"
+      },
+      "mask": {
+        "path": "mask_stains.png",
+        "sha256": "d7851447f0ad6320d34c82a17a270661223cb076f16fbcd892e96a0748432bdd"
+      },
+      "no_op_baseline_vs_clean_reference": {
+        "global_mae_0_1": 0.007036326918751001,
+        "damage_region_mae_0_1": 0.17768676578998566,
+        "damage_mask_fraction": 0.039599609375,
+        "global_psnr_db": 27.298412389071153,
+        "global_ssim": 0.9722936749458313
+      },
+      "model_output": "NOT_RUN: no LiteRT model/runtime/device photo was available in this workspace"
+    },
+    "faded": {
+      "input": {
+        "path": "input_faded.png",
+        "sha256": "cb7bc852984b3c65d5fa48e8ae1d9c7bee8f4468825296c1ddf3731e6689395e"
+      },
+      "mask": {
+        "path": "mask_faded.png",
+        "sha256": "96accbb2c9def382b2ac007b997f32a1b481f666bb68c3e6b51aa44dce0edd02"
+      },
+      "no_op_baseline_vs_clean_reference": {
+        "global_mae_0_1": 0.11085003614425659,
+        "damage_region_mae_0_1": 0.11085003614425659,
+        "damage_mask_fraction": 1.0,
+        "global_psnr_db": 17.805790347054668,
+        "global_ssim": 0.9395726323127747
+      },
+      "model_output": "NOT_RUN: no LiteRT model/runtime/device photo was available in this workspace"
+    },
+    "severe": {
+      "input": {
+        "path": "input_severe.png",
+        "sha256": "4819b71666ad0e073a2591582af29f49fd5f0d7b7d76854eb7b71f2dd04c9c53"
+      },
+      "mask": {
+        "path": "mask_severe.png",
+        "sha256": "e9bb58a3a6a5b0c8a8d8ef9645402357d6240400a7ab7bf5c995702d1abf2aca"
+      },
+      "no_op_baseline_vs_clean_reference": {
+        "global_mae_0_1": 0.023783201351761818,
+        "damage_region_mae_0_1": 0.18734750151634216,
+        "damage_mask_fraction": 0.12685221354166668,
+        "global_psnr_db": 20.90817348364292,
+        "global_ssim": 0.8588092923164368
+      },
+      "model_output": "NOT_RUN: no LiteRT model/runtime/device photo was available in this workspace"
+    }
+  },
+  "clean_reference": {
+    "path": "clean_reference.png",
+    "sha256": "949da4748255a17455b5260db4c3e7820e912dc475c99fbf0a8a135ac48650ef"
+  }
+}

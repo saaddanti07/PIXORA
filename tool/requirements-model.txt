@@ -1,0 +1,12 @@
+# Python dependencies for the Phase 02 model pipeline (tool/convert_model.py).
+#
+# torch is installed separately from the CPU-only wheel index by the CI job,
+# because the default PyPI wheel pulls ~2 GB of CUDA packages we do not need:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+#
+# Python 3.12 is required (ai-edge-litert and litert-torch both ship 3.12
+# wheels; the converter is only ever run in CI or on a developer machine).
+
+numpy==2.2.6
+litert-torch==0.10.0
+ai-edge-litert==2.3.0

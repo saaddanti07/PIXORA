@@ -1,0 +1,175 @@
+{
+  "@@locale": "en",
+  "appName": "PIXORA",
+  "@appName": {
+    "description": "Official application name. Never translated or combined with the word AI."
+  },
+  "appTagline": "Restore · Enhance · Create",
+  "navHome": "Home",
+  "navHistory": "History",
+  "navSettings": "Settings",
+  "homeWelcomeTitle": "Welcome to PIXORA",
+  "homeWelcomeSubtitle": "Bring old photos back to life — beautifully, privately, on your device.",
+  "homeHeroTitle": "Restore Your Memories",
+  "homeHeroDescription": "Bring old and damaged photos back to life.",
+  "homeChoosePhoto": "Choose a Photo",
+  "homeOpeningGallery": "Opening gallery…",
+  "homeHeroBadge": "100% on-device",
+  "homeCreativeToolsTitle": "Creative tools",
+  "homeCreativeToolsSubtitle": "Powerful enhancements, built for your device.",
+  "homeRecentTitle": "Recent activity",
+  "homeRecentAction": "View all",
+  "homeRecentEmptyTitle": "Nothing here yet",
+  "homeRecentEmptyDescription": "Processed photos will appear here once you start creating with PIXORA.",
+  "homeSettingsTooltip": "Settings",
+  "toolEnhanceTitle": "AI Photo Enhancement",
+  "toolEnhanceDescription": "Sharpen details and boost clarity.",
+  "toolRestorationTitle": "Old Photo Restoration",
+  "toolRestorationDescription": "Repair scratches, fading and damage.",
+  "toolFaceTitle": "Face Enhancement",
+  "toolFaceDescription": "Recover natural facial detail.",
+  "toolColorizeTitle": "Black & White Colorization",
+  "toolColorizeDescription": "Add realistic colour to old photos.",
+  "toolBackgroundTitle": "Background Enhancement",
+  "toolBackgroundDescription": "Clean up and enrich the background.",
+  "toolAnimeTitle": "Anime Style",
+  "toolAnimeDescription": "Turn portraits into anime artwork.",
+  "toolArtisticTitle": "Artistic Effects",
+  "toolArtisticDescription": "Painterly styles and creative filters.",
+  "toolPixelTitle": "Pixel Art",
+  "toolPixelDescription": "Convert photos into crisp pixel art.",
+  "toolComingSoon": "Coming soon",
+  "toolComingSoonTitle": "In development",
+  "toolComingSoonBody": "{tool} is being built for a future PIXORA update. It will run on your device, and it will stay free.",
+  "@toolComingSoonBody": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "toolComingSoonClose": "Got it",
+  "previewTitle": "Preview",
+  "previewClose": "Close",
+  "previewZoomHint": "Pinch to zoom",
+  "previewChooseAnother": "Choose another photo",
+  "previewBackHome": "Back to home",
+  "previewDetailsTitle": "Photo details",
+  "previewFileName": "File name",
+  "previewDimensions": "Dimensions",
+  "previewFileSize": "File size",
+  "previewFormat": "Format",
+  "previewUnknown": "Unknown",
+  "previewDimensionValue": "{width} × {height}",
+  "@previewDimensionValue": {
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "previewFormatJpeg": "JPEG",
+  "previewFormatPng": "PNG",
+  "previewFormatWebp": "WebP",
+  "previewFormatGif": "GIF",
+  "previewFormatUnknown": "Unknown",
+  "previewStoredLocally": "Stored only on this device",
+  "previewFutureNotice": "Automatic restoration and enhancement arrive in an upcoming update. Your photo stays on your device.",
+  "pickErrorPermission": "PIXORA needs access to your photos to continue. Please allow photo access in your device settings.",
+  "pickErrorUnavailable": "No photo picker is available on this device. Please try again.",
+  "pickErrorUnsupported": "That file is not a supported image. Please choose a JPG, PNG or WebP photo.",
+  "pickErrorTooLarge": "That photo is too large to open safely. Please try a smaller image.",
+  "pickErrorUnreadable": "The selected photo could not be read. Please try another one.",
+  "pickErrorUnknown": "Something went wrong while opening your photo. Please try again.",
+  "historyTitle": "History",
+  "historySubtitle": "Every photo you process will be kept here.",
+  "historyEmptyTitle": "No processed photos yet",
+  "historyEmptyDescription": "When you restore or enhance a photo, it will appear here so you can come back to it at any time.",
+  "historyEmptyAction": "Create something",
+  "historyPrivacyNote": "History stays on your device. Nothing is uploaded.",
+  "settingsTitle": "Settings",
+  "settingsSubtitle": "Make PIXORA feel like yours.",
+  "settingsAppearanceTitle": "Appearance",
+  "settingsAppearanceSubtitle": "Choose how PIXORA looks.",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsLanguageTitle": "Language",
+  "settingsLanguageSubtitle": "Changes apply instantly, no restart needed.",
+  "settingsPrivacyTitle": "Your privacy",
+  "settingsPrivacyBody": "Photos are processed on your device. PIXORA never uploads your images.",
+  "settingsAboutTitle": "About",
+  "settingsAboutSubtitle": "Free for everyone, forever.",
+  "settingsVersion": "Version {version}",
+  "@settingsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsFreeBadge": "Free",
+  "settingsAdSupported": "PIXORA stays free for everyone. Ads keep it that way — they never interrupt your editing.",
+  "settingsApplicationId": "Application ID",
+  "settingsLicenses": "Open-source licenses",
+  "settingsLicensesNote": "PIXORA is built with Flutter and open-source packages. Thank you to their authors.",
+  "languageEnglish": "English",
+  "languageArabic": "Arabic",
+  "languageFrench": "French",
+  "processingTitle": "AI photo enhancement",
+  "processingFastTitle": "Fast enhancement",
+  "processingPreparing": "Preparing your photo…",
+  "processingTiles": "Tile {completed} of {total}",
+  "@processingTiles": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "processingRemaining": "About {seconds} s remaining",
+  "@processingRemaining": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "processingOnDevice": "Runs entirely on your device. Nothing is uploaded.",
+  "processingCancel": "Cancel",
+  "processingCancelling": "Cancelling…",
+  "processingCancelledTitle": "Cancelled",
+  "processingCancelledBody": "Your original photo is untouched.",
+  "processingFailedTitle": "Could not process this photo",
+  "processingCompareHint": "Drag the handle to compare",
+  "processingOriginal": "Original",
+  "processingResult": "Result",
+  "processingAiBadge": "On-device AI",
+  "processingClassicalBadge": "Classical enhancement",
+  "processingSavedToHistory": "Saved to your History",
+  "processingDuration": "Took {seconds} s",
+  "@processingDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "processingClose": "Close",
+  "processingTryAgain": "Try again",
+  "processingRestoreAction": "AI upscaling",
+  "processingEnhanceAction": "Fast enhancement",
+  "processingAiUnavailable": "AI restoration is not available in this build. Fast enhancement still works.",
+  "processingHistorySaveFailed": "Could not save this result to History. The image is still available here.",
+  "processingGalleryExport": "Save to gallery",
+  "processingGallerySaving": "Saving to gallery…",
+  "processingGallerySaved": "Saved to Pictures/PIXORA.",
+  "processingGalleryFailed": "Could not save to the gallery. Check storage permission and try again.",
+  "processingAiCapabilityNote": "Real-ESRGAN enlarges and enhances general detail. It is not a scratch-removal or image-reconstruction model."
+}

@@ -1,0 +1,33 @@
+name: pixora
+description: "PIXORA — premium, fully on-device photo restoration and creative image tools for Android."
+publish_to: "none"
+version: 0.2.1+4
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Formatting helpers required by the generated localization code.
+  intl: ^0.20.3
+
+  # Local, on-device photo selection (Android Photo Picker). No network usage.
+  image_picker: ^1.1.2
+
+  # Local key/value storage for user preferences and the history ledger.
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Enables flutter gen-l10n (see l10n.yaml).
+  generate: true

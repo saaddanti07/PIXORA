@@ -1,6 +1,7 @@
 package com.pixora.app.engine
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -99,8 +100,13 @@ class SuperResolutionEngine(
         var working: Bitmap? = null
         var outputBitmap: Bitmap? = null
         try {
+            val diagnostics = EngineDiagnostics(
+                cacheDirectory = context.cacheDir,
+                enabled = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
+            )
             val orientation = orientationOf(request.sourcePath)
             val (rawWidth, rawHeight) = boundsOf(request.sourcePath)
+            diagnostics.source(source, rawWidth, rawHeight, orientation)
             val swap = orientation in 5..8
             val sourceWidth = if (swap) rawHeight else rawWidth
             val sourceHeight = if (swap) rawWidth else rawHeight
@@ -124,6 +130,7 @@ class SuperResolutionEngine(
 
             val sourcePixels = IntArray(working.width * working.height)
             working.getPixels(sourcePixels, 0, working.width, 0, 0, working.width, working.height)
+            diagnostics.working(working, sourcePixels)
             val padded = mirrorPad(sourcePixels, working.width, working.height, request.halo)
 
             val outputWidth = working.width * model.scale
@@ -154,7 +161,9 @@ class SuperResolutionEngine(
                     valueRange = model.valueRange,
                     target = engine.input,
                 )
+                diagnostics.inputTile(engine.input, index, model.inputLayout, model.inputWidth, model.inputHeight)
                 engine.runTile()
+                diagnostics.outputTile(engine.output, index, model.outputLayout, model.outputWidth, model.outputHeight)
                 composeTile(
                     tileOutput = engine.output,
                     layout = model.outputLayout,
@@ -175,6 +184,19 @@ class SuperResolutionEngine(
                 )
             }
 
+            diagnostics.finishTensors(
+                inputLayout = model.inputLayout,
+                outputLayout = model.outputLayout,
+                inputWidth = model.inputWidth,
+                inputHeight = model.inputHeight,
+                outputWidth = model.outputWidth,
+                outputHeight = model.outputHeight,
+                valueRange = model.valueRange,
+                inputTiles = plan.tileCount,
+                outputTiles = plan.tileCount,
+            )
+            diagnostics.stitched(outBitmap)
+
             outputFile = File(request.outputPath)
             outputFile.parentFile?.mkdirs()
             FileOutputStream(outputFile).use { stream ->
@@ -183,6 +205,7 @@ class SuperResolutionEngine(
                 }
             }
 
+            diagnostics.encoded(outputFile, outputWidth, outputHeight)
             val duration = System.currentTimeMillis() - started
             Log.i(
                 TAG,

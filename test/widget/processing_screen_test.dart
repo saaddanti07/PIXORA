@@ -21,6 +21,7 @@ import 'package:pixora/features/image_engine/services/gallery_export_service.dar
 import 'package:pixora/features/image_engine/services/native_engine_channel.dart';
 import 'package:pixora/features/image_picker/models/picked_image.dart';
 import 'package:pixora/features/processing/screens/processing_screen.dart';
+import 'package:pixora/features/processing/widgets/before_after_view.dart';
 
 import '../helpers/image_fixtures.dart';
 
@@ -194,6 +195,12 @@ void main() {
     expect(find.text('Drag the handle to compare'), findsOneWidget);
     expect(find.text('Original'), findsOneWidget);
     expect(find.text('Result'), findsOneWidget);
+    final BeforeAfterView comparison = tester.widget<BeforeAfterView>(
+      find.byType(BeforeAfterView),
+    );
+    expect(comparison.beforePath, imagePath);
+    expect(comparison.afterPath, output.path);
+    expect(comparison.afterPath, isNot(comparison.beforePath));
     expect(find.text('Saved to your History'), findsOneWidget);
 
     final List<HistoryEntry> entries = history.load();

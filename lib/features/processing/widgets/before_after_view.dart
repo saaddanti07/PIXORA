@@ -18,7 +18,10 @@ class BeforeAfterView extends StatefulWidget {
     this.cacheWidth = 1200,
     this.imageBuilder,
     super.key,
-  });
+  }) : assert(
+          beforePath != afterPath,
+          'BeforeAfterView requires distinct original and result paths.',
+        );
 
   final String beforePath;
   final String afterPath;

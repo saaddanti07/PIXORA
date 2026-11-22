@@ -26,7 +26,7 @@ The source-level A–G wiring is internally consistent; that does not establish 
 
 ## 2. Is model output meaningfully different?
 
-**Unknown for the reported photo.** Neither input nor output bytes from the Redmi 9 were supplied. The CI converter report shows the converted network is not a pure bicubic pass-through on its synthetic checker/noise/detail fixtures (reported mean absolute change vs bicubic roughly 0.1055–0.1346 on normalized 0..1 data). That is a conversion/nontrivial-output check, not evidence of scratch removal, and does not quantify the Redmi result against its original.
+**Unknown for the reported photo.** Neither input nor output bytes from the Redmi 9 were supplied. The CI converter report shows the converted network is not a pure bicubic pass-through on its synthetic checker/noise/detail fixtures (reported mean absolute change vs bicubic roughly 0.1055–0.1346 on normalized 0..1 data). The new paired benchmark now measures whether it reduces synthetic damage-region error versus a matched resize-plus-bicubic baseline; those model-output measurements are diagnostics for this generic SR model, not evidence of damage removal on the user's photo and not a Redmi result. No real-photo output or target-device run is available.
 
 ## 3. Correct comparison path and regression protection
 
@@ -41,16 +41,18 @@ These tests protect against a future path-wiring regression. They do not inspect
 
 ## 4. Controlled synthetic benchmark (actual results, baseline only)
 
-A reproducible procedural 640×480 test chart plus exact clean reference and four artificial degradations is in `test/fixtures/restoration_benchmark/`. It is deliberately a **synthetic chart, not a photograph**. Generate/score with:
+A reproducible procedural 640×480 test chart plus exact clean reference and four artificial degradations is in `test/fixtures/restoration_benchmark/`. It is deliberately a **synthetic chart, not a photograph**. The CI model-preparation job now runs the actual converted TFLite model over paired fixtures in the app's 128-pixel tiles, preserves the first damaged-fixture tensor and raw pre-conversion output, saves the stitched model PNGs and labeled same-canvas panels, and reports both damage-region MAE reduction versus a matched bicubic pipeline and image metrics versus clean reference. Reproduce with:
 
 ```bash
-python -m pip install -r tool/requirements-image-audit.txt
-python tool/benchmark_synthetic_restoration.py
-# After actually running a model, put its outputs at <outputs>/{scratches,stains,faded,severe}.png:
-python tool/benchmark_synthetic_restoration.py --outputs <outputs>
+python -m pip install -r tool/requirements-restoration-benchmark.txt
+python tool/benchmark_synthetic_restoration.py \\
+  --model android/app/src/main/assets/models/realesr_general_x4v3_fp32.tflite \\
+  --out-dir /tmp/pixora-damage-fixtures \\
+  --outputs /tmp/pixora-damage-model-outputs \\
+  --report /tmp/pixora-damage-benchmark.json
 ```
 
-The checked-in JSON contains fixed image/mask SHA-256 values and baseline quality versus the clean synthetic reference. These are measured degradation baselines; model-output rows say NOT_RUN rather than fabricating a restored output.
+The checked-in JSON contains fixed image/mask SHA-256 values and baseline quality versus the clean synthetic reference. Actual LiteRT outputs are generated and scored in CI; synthetic-model output rows there are measurements of this converted super-resolution model only, not proof on real photos or Redmi 9. The JSON includes matching bicubic damage-region baselines and explicitly separates output pixel count from restoration quality.
 
 | Synthetic degradation | Mask area | No-op damage-region MAE (0–1) | No-op full-image MAE (0–1) | No-op PSNR (dB) | No-op SSIM |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -79,12 +81,12 @@ The Microsoft candidate is a **research candidate, not an app recommendation**: 
 
 - Added debug-build-only trace records for source file, working decoded pixels, normalized RGB input tensors, raw pre-postprocess model output, stitched bitmap, and encoded JPEG. No image pixels are logged. Debug builds save first-tile input and raw output float32 dumps inside app-private cache; release builds do not capture those dumps.
 - Added comparison output-path wiring assertions and widget-level two-source test.
-- Added deterministic synthetic paired benchmark generator, binary masks, hashes, baseline MAE/PSNR/SSIM, optional actual-output scorer, and comparison-panel generation. It intentionally does not generate restoration output itself.
+- Added deterministic synthetic paired benchmark generator, binary masks, hashes, baseline MAE/PSNR/SSIM, actual LiteRT CPU tiled inference, raw first-tile input/output capture, matched bicubic damage-region scoring, and comparison panels. CI uploads the generated outputs/report with the model artifact; synthetic inference is not device or real-photo proof.
 - Existing History persistence and gallery export fixes remain covered by current widget/unit tests; this investigation does not alter their behavior.
 
 ## 7. APK / validation status
 
-No new APK has been produced for this investigation at report authoring time. Local Flutter, Android Gradle wrapper executable, ADB, and physical device are unavailable in this checkout. CI must run after these changes are pushed to validate analyzer/tests/native tests/build. That debug APK would contain diagnostics only for a physical-device reproduction; it is **not** a restoration fix and must not be described as one. The acceptance blocker remains open until real same-image evidence demonstrates meaningful damage reduction and a suitable model passes the target-device gates.
+The earlier debug APK build passed CI before this latest benchmark integration. Local Flutter, ADB, and physical device are unavailable in this checkout. CI must run after these changes are pushed to validate the new actual-LiteRT synthetic benchmark as well as analyzer/tests/native tests/build. That debug APK and synthetic score are diagnostics only; neither is a physical-device restoration fix. The acceptance blocker remains open until real same-image evidence demonstrates meaningful damage reduction and a suitable model passes the target-device gates.
 
 ### Needed to close this incident
 

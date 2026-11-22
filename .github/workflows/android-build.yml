@@ -71,6 +71,79 @@ jobs:
             --out "$MODEL_DIR/$MODEL_FILE" \
             --report models/report.json
 
+      - name: Verify the artefact against its own report
+        run: |
+          set -euo pipefail
+          MODEL="$MODEL_DIR/$MODEL_FILE"
+          test -f "$MODEL" || { echo "model missing: $MODEL"; exit 1; }
+          EXPECTED=$(python -c "import json;print(json.load(open('models/report.json'))['model']['tfliteSha256'])")
+          ACTUAL=$(sha256sum "$MODEL" | cut -d' ' -f1)
+          echo "expected $EXPECTED"
+          echo "actual   $ACTUAL"
+          test "$EXPECTED" = "$ACTUAL" || { echo "model digest mismatch"; exit 1; }
+          ls -l "$MODEL_DIR"
+
+      - name: Install benchmark inference dependencies
+        run: python -m pip install -r tool/requirements-restoration-benchmark.txt
+
+      - name: Run the paired synthetic damage benchmark on LiteRT CPU
+        run: |
+          set -euo pipefail
+          mkdir -p .benchmark
+          python tool/benchmark_synthetic_restoration.py \
+            --out-dir .benchmark/restoration-benchmark/fixtures \
+            --outputs .benchmark/restoration-benchmark/results \
+            --model "$MODEL_DIR/$MODEL_FILE" \
+            --report .benchmark/restoration-benchmark/benchmark.json
+          python - <<'PY'
+          import json, pathlib
+          report = json.loads(pathlib.Path(".benchmark/restoration-benchmark/benchmark.json").read_text())
+          inference = report["inference"]
+          rows = [
+              "### Synthetic damage restoration benchmark — actual LiteRT inference",
+              "",
+              f"Model SHA-256: `{inference['model']['sha256']}`; tensor shapes: `{inference['model']['input_shape']}` → `{inference['model']['output_shape']}`; first actual input tile SHA-256: `{inference['first_model_input_tile']['tensor_sha256_little_endian_f32']}`; first raw output tile SHA-256: `{inference['raw_first_tile_output']['tensor_sha256_little_endian_f32']}`.",
+              "",
+              "| Fixture | Baseline bicubic damage-region MAE | Model damage-region MAE | Change vs bicubic | Model global MAE | Model SSIM |",
+              "| --- | ---: | ---: | ---: | ---: | ---: |",
+          ]
+          for name, item in report["variants"].items():
+              output = item["model_output"]
+              baseline = output["matched_working_size_bicubic_baseline"]
+              actual = output["metrics_after_resize_to_reference_canvas"]
+              change = output["damage_region_error_reduction_percent_vs_bicubic"]
+              rows.append(
+                  f"| {name} | {baseline['damage_region_mae_0_1']:.5f} | "
+                  f"{actual['damage_region_mae_0_1']:.5f} | {change:+.2f}% | "
+                  f"{actual['global_mae_0_1']:.5f} | {actual['global_ssim']:.5f} |"
+              )
+          rows += [
+              "",
+              f"Output: `{inference['resolution_observation']['network_output_dimensions']}` from working input `{inference['resolution_observation']['working_dimensions']}` at ×{inference['resolution_observation']['network_scale']}. No high-resolution clean target exists, so resolution fidelity is not scored. Synthetic fixtures only; this is not a Redmi 9 or real-photo result.",
+              "",
+          ]
+          pathlib.Path("restoration-benchmark-summary.md").write_text("\n".join(rows))
+          print("\n".join(rows))
+          PY
+          cat restoration-benchmark-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish synthetic benchmark measurements on the commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            cat restoration-benchmark-summary.md
+            echo
+            echo '<details><summary>Full benchmark JSON</summary>'
+            echo
+            echo '```json'
+            cat .benchmark/restoration-benchmark/benchmark.json
+            echo '```'
+            echo '</details>'
+          } > restoration-benchmark-comment.md
+          gh api -X POST "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            -F body=@restoration-benchmark-comment.md || echo "could not attach synthetic benchmark report"
+
       - name: Summarise the model report
         run: |
           python - <<'PY'
@@ -102,18 +175,6 @@ jobs:
           PY
           cat model-summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Verify the artefact against its own report
-        run: |
-          set -euo pipefail
-          MODEL="$MODEL_DIR/$MODEL_FILE"
-          test -f "$MODEL" || { echo "model missing: $MODEL"; exit 1; }
-          EXPECTED=$(python -c "import json;print(json.load(open('models/report.json'))['model']['tfliteSha256'])")
-          ACTUAL=$(sha256sum "$MODEL" | cut -d' ' -f1)
-          echo "expected $EXPECTED"
-          echo "actual   $ACTUAL"
-          test "$EXPECTED" = "$ACTUAL" || { echo "model digest mismatch"; exit 1; }
-          ls -l "$MODEL_DIR"
-
       - name: Publish the model report on the commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -139,6 +200,7 @@ jobs:
             android/app/src/main/assets/models
             models/report.json
             model-summary.md
+            .benchmark/restoration-benchmark
           if-no-files-found: error
           retention-days: 30
 

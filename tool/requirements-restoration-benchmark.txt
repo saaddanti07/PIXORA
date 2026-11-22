@@ -1,0 +1,5 @@
+# LiteRT CPU inference and image metrics for paired synthetic-damage regression.
+numpy==2.2.6
+ai-edge-litert==2.3.0
+Pillow==11.1.0
+scikit-image==0.25.2
